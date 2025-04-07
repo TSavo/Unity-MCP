@@ -38,7 +38,7 @@ export class UnityClient implements IUnityClient {
       logger.debug(`Executing code in Unity with timeout ${timeout}ms`);
       const startTime = Date.now();
 
-      const response = await this.axios.post('/execute', {
+      const response = await this.axios.post('/api/CodeExecution/execute', {
         code,
         timeout
       });
@@ -93,7 +93,7 @@ export class UnityClient implements IUnityClient {
   public async getEnvironmentInfo(): Promise<UnityEnvironmentInfo> {
     try {
       logger.debug('Getting Unity environment info');
-      const response = await this.axios.get('/info');
+      const response = await this.axios.get('/api/CodeExecution/info');
       return response.data;
     } catch (error) {
       logger.error(`Failed to get Unity environment info: ${error instanceof Error ? error.message : String(error)}`);

@@ -1,13 +1,42 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getHelp = exports.setupSSE = exports.getManifest = exports.getResult = exports.executeTool = void 0;
-const uuid_1 = require("uuid");
-// In-memory storage for results
-const results = new Map();
+exports.updateOperation = exports.listOperations = exports.cancelOperation = exports.getHelp = exports.setupSSE = exports.getManifest = exports.getResult = exports.executeTool = void 0;
+const asyncExecutionSystem_1 = require("../../async/asyncExecutionSystem");
+const types_1 = require("../../async/types");
+const unity_1 = require("../../unity");
+const path_1 = __importDefault(require("path"));
+const logger_1 = __importDefault(require("../../utils/logger"));
+// Create storage options
+const storageOptions = {
+    type: 'nedb',
+    dbPath: path_1.default.join(process.cwd(), 'data', 'operations')
+};
+// Create an instance of the AsyncExecutionSystem with persistent storage
+const asyncExecutionSystem = new asyncExecutionSystem_1.AsyncExecutionSystem(storageOptions);
+// Create a Unity client
+const unityClient = unity_1.UnityClientFactory.createClient({
+    host: process.env.UNITY_HOST || 'localhost',
+    port: parseInt(process.env.UNITY_PORT || '8081'),
+    resilient: true
+});
+// Create a Unity tool implementation
+const unityToolImplementation = new unity_1.UnityToolImplementation(unityClient);
+// Clean up resources when the process exits
+process.on('exit', async () => {
+    await asyncExecutionSystem.dispose();
+});
+// Handle SIGINT (Ctrl+C)
+process.on('SIGINT', async () => {
+    await asyncExecutionSystem.dispose();
+    process.exit(0);
+});
 /**
  * Execute a tool and return the response
  */
-const executeTool = (req, res) => {
+const executeTool = async (req, res) => {
     const toolRequest = req.body;
     const tools = req.app.locals.mcpManifest.tools;
     // Check if tool exists
@@ -20,18 +49,37 @@ const executeTool = (req, res) => {
         res.status(400).json(errorResponse);
         return;
     }
-    // Execute the tool
+    // Get timeout from parameters or use default
+    const timeout = toolRequest.parameters?.timeout || 1000;
     try {
-        const logId = (0, uuid_1.v4)();
-        const response = executeToolImplementation(tool, toolRequest.parameters, logId, tools);
-        // Store the result
-        results.set(logId, response);
+        // Create an operation executor function
+        const executor = async ({ onProgress, signal }) => {
+            // Check if the operation was cancelled
+            if (signal.aborted) {
+                throw new Error('Operation was cancelled');
+            }
+            // Execute the tool implementation
+            return executeToolImplementation(tool, toolRequest.parameters, onProgress, tools);
+        };
+        // Execute the operation with the specified timeout
+        const operationResult = await asyncExecutionSystem.executeOperation(executor, { timeoutMs: timeout });
+        // Convert the operation result to an MCP tool response
+        const response = {
+            status: operationResultStatusToMCPStatus(operationResult.status),
+            log_id: operationResult.logId,
+            result: operationResult.result,
+            partial_result: operationResult.partialResult,
+            error: operationResult.error,
+            is_complete: operationResult.isComplete,
+            message: operationResult.message
+        };
         res.json(response);
     }
     catch (error) {
+        logger_1.default.error(`Error executing tool: ${error instanceof Error ? error.message : String(error)}`);
         const errorResponse = {
             status: 'error',
-            error: error instanceof Error ? error.message : 'Unknown error'
+            error: error instanceof Error ? error.message : String(error)
         };
         res.status(500).json(errorResponse);
     }
@@ -40,18 +88,39 @@ exports.executeTool = executeTool;
 /**
  * Get a result by log ID
  */
-const getResult = (req, res) => {
+const getResult = async (req, res) => {
     const logId = req.params.logId;
-    const result = results.get(logId);
-    if (!result) {
+    try {
+        // Get the result from the AsyncExecutionSystem
+        const operationResult = await asyncExecutionSystem.getResult(logId);
+        if (operationResult.status === types_1.OperationStatus.ERROR && operationResult.error?.includes('not found')) {
+            const errorResponse = {
+                status: 'error',
+                error: `Result not found for log ID: ${logId}`
+            };
+            res.status(404).json(errorResponse);
+            return;
+        }
+        // Convert the operation result to an MCP tool response
+        const response = {
+            status: operationResultStatusToMCPStatus(operationResult.status),
+            log_id: operationResult.logId,
+            result: operationResult.result,
+            partial_result: operationResult.partialResult,
+            error: operationResult.error,
+            is_complete: operationResult.isComplete,
+            message: operationResult.message
+        };
+        res.json(response);
+    }
+    catch (error) {
+        logger_1.default.error(`Error getting result: ${error instanceof Error ? error.message : String(error)}`);
         const errorResponse = {
             status: 'error',
-            error: `Result not found for log ID: ${logId}`
+            error: error instanceof Error ? error.message : String(error)
         };
-        res.status(404).json(errorResponse);
-        return;
+        res.status(500).json(errorResponse);
     }
-    res.json(result);
 };
 exports.getResult = getResult;
 /**
@@ -74,6 +143,10 @@ const setupSSE = (req, res) => {
     const heartbeat = !isTest ? setInterval(() => {
         res.write('event: heartbeat\ndata: {}\n\n');
     }, 30000) : null;
+    // Ensure the timer is unref'd so it doesn't keep the process alive
+    if (heartbeat && heartbeat.unref) {
+        heartbeat.unref();
+    }
     // Clean up on close
     req.on('close', () => {
         if (heartbeat)
@@ -90,57 +163,221 @@ exports.setupSSE = setupSSE;
 /**
  * Get help documentation
  */
-const getHelp = (req, res) => {
-    const logId = (0, uuid_1.v4)();
+const getHelp = async (req, res) => {
     const tools = req.app.locals.mcpManifest.tools;
-    const response = {
-        status: 'success',
-        log_id: logId,
-        result: {
-            documentation: 'Unity-AI Bridge Help Documentation',
-            tools: tools.map((t) => ({
-                id: t.id,
-                description: t.description
-            }))
-        },
-        is_complete: true,
-        message: 'Help documentation retrieved successfully.'
-    };
-    // Store the result
-    results.set(logId, response);
-    res.json(response);
+    try {
+        // Create an operation executor function for the help documentation
+        const executor = async ({ onProgress, signal }) => {
+            // Check if the operation was cancelled
+            if (signal.aborted) {
+                throw new Error('Operation was cancelled');
+            }
+            return {
+                documentation: 'Unity-AI Bridge Help Documentation',
+                tools: tools.map((t) => ({
+                    id: t.id,
+                    description: t.description
+                }))
+            };
+        };
+        // Execute the operation with a short timeout (help should be fast)
+        const operationResult = await asyncExecutionSystem.executeOperation(executor, { timeoutMs: 100 });
+        // Convert the operation result to an MCP tool response
+        const response = {
+            status: operationResultStatusToMCPStatus(operationResult.status),
+            log_id: operationResult.logId,
+            result: operationResult.result,
+            is_complete: operationResult.isComplete,
+            message: 'Help documentation retrieved successfully.'
+        };
+        res.json(response);
+    }
+    catch (error) {
+        logger_1.default.error(`Error getting help: ${error instanceof Error ? error.message : String(error)}`);
+        const errorResponse = {
+            status: 'error',
+            error: error instanceof Error ? error.message : String(error)
+        };
+        res.status(500).json(errorResponse);
+    }
 };
 exports.getHelp = getHelp;
 /**
  * Execute a tool implementation
  */
-function executeToolImplementation(tool, parameters, logId, tools) {
-    // For now, just return a mock response
-    // In a real implementation, this would delegate to the appropriate handler
+async function executeToolImplementation(tool, parameters, reportProgress, tools) {
+    // Check if this is a Unity tool
+    if (tool.id.startsWith('unity_') &&
+        (tool.id === 'unity_execute_code' || tool.id === 'unity_query')) {
+        try {
+            // Forward to Unity tool implementation
+            return await unityToolImplementation.executeUnityTool(tool.id, parameters, reportProgress);
+        }
+        catch (error) {
+            logger_1.default.error(`Error executing Unity tool: ${error instanceof Error ? error.message : String(error)}`);
+            throw error;
+        }
+    }
+    // Handle other tools
     switch (tool.id) {
         case 'unity_help':
             return {
-                status: 'success',
-                log_id: logId,
-                result: {
-                    documentation: 'Unity-AI Bridge Help Documentation',
-                    tools: tools.map(t => ({
-                        id: t.id,
-                        description: t.description
-                    }))
-                },
-                is_complete: true,
-                message: 'Help documentation retrieved successfully.'
+                documentation: 'Unity-AI Bridge Help Documentation',
+                tools: tools.map(t => ({
+                    id: t.id,
+                    description: t.description
+                }))
+            };
+        case 'unity_get_logs':
+            return {
+                logs: [
+                    { id: 'log1', message: 'Test log 1', timestamp: new Date().toISOString(), type: 'info' },
+                    { id: 'log2', message: 'Test log 2', timestamp: new Date().toISOString(), type: 'warning' }
+                ]
+            };
+        case 'unity_get_log_details':
+            return {
+                id: parameters.log_id,
+                message: 'Detailed log message',
+                timestamp: new Date().toISOString(),
+                type: 'info',
+                stackTrace: 'Stack trace...',
+                context: { scene: 'Main' }
             };
         default:
-            return {
-                status: 'success',
-                log_id: logId,
-                result: {
-                    message: `Tool ${tool.id} executed with parameters: ${JSON.stringify(parameters)}`
-                },
-                is_complete: true,
-                message: `Tool ${tool.id} executed successfully.`
+            logger_1.default.warn(`Unsupported tool: ${tool.id}`);
+            throw new Error(`Unsupported tool: ${tool.id}`);
+    }
+}
+/**
+ * Convert an operation status to an MCP status
+ */
+function operationResultStatusToMCPStatus(status) {
+    switch (status) {
+        case types_1.OperationStatus.SUCCESS:
+            return 'success';
+        case types_1.OperationStatus.ERROR:
+            return 'error';
+        case types_1.OperationStatus.TIMEOUT:
+            return 'timeout';
+        case types_1.OperationStatus.CANCELLED:
+            return 'cancelled';
+        case types_1.OperationStatus.RUNNING:
+            return 'running';
+        default:
+            return 'unknown';
+    }
+}
+/**
+ * Cancel an operation
+ */
+const cancelOperation = async (req, res) => {
+    const logId = req.params.logId;
+    try {
+        // Cancel the operation
+        const result = await asyncExecutionSystem.cancelOperation(logId);
+        // Convert the operation result to an MCP tool response
+        const response = {
+            status: operationResultStatusToMCPStatus(result.status),
+            log_id: result.logId,
+            message: result.message,
+            error: result.error
+        };
+        res.json(response);
+    }
+    catch (error) {
+        logger_1.default.error(`Error cancelling operation: ${error instanceof Error ? error.message : String(error)}`);
+        const errorResponse = {
+            status: 'error',
+            error: error instanceof Error ? error.message : String(error)
+        };
+        res.status(500).json(errorResponse);
+    }
+};
+exports.cancelOperation = cancelOperation;
+/**
+ * List all operations
+ */
+const listOperations = async (req, res) => {
+    try {
+        // Get all operations
+        const operations = await asyncExecutionSystem.listOperations();
+        res.json({
+            status: 'success',
+            operations
+        });
+    }
+    catch (error) {
+        logger_1.default.error(`Error listing operations: ${error instanceof Error ? error.message : String(error)}`);
+        const errorResponse = {
+            status: 'error',
+            error: error instanceof Error ? error.message : String(error)
+        };
+        res.status(500).json(errorResponse);
+    }
+};
+exports.listOperations = listOperations;
+/**
+ * Update an operation result
+ * This endpoint is used by Unity to update the result of a long-running operation
+ */
+const updateOperation = async (req, res) => {
+    const logId = req.params.logId;
+    const update = req.body;
+    try {
+        // Get the current result
+        const currentResult = await asyncExecutionSystem.getResult(logId);
+        if (currentResult.status === types_1.OperationStatus.ERROR && currentResult.error?.includes('not found')) {
+            const errorResponse = {
+                status: 'error',
+                error: `Result not found for log ID: ${logId}`
             };
+            res.status(404).json(errorResponse);
+            return;
+        }
+        // Create an updated result
+        const updatedResult = {
+            ...currentResult,
+            ...update,
+            logId, // Ensure the log ID is preserved
+            // If the update includes a status, convert it from string to OperationStatus
+            status: update.status ? stringToOperationStatus(update.status) : currentResult.status
+        };
+        // Store the updated result
+        await asyncExecutionSystem.storage.storeResult(updatedResult);
+        // Return success
+        res.json({
+            status: 'success',
+            message: `Operation ${logId} updated successfully`,
+            log_id: logId
+        });
+    }
+    catch (error) {
+        logger_1.default.error(`Error updating operation: ${error instanceof Error ? error.message : String(error)}`);
+        const errorResponse = {
+            status: 'error',
+            error: error instanceof Error ? error.message : String(error)
+        };
+        res.status(500).json(errorResponse);
+    }
+};
+exports.updateOperation = updateOperation;
+/**
+ * Convert a string status to OperationStatus
+ */
+function stringToOperationStatus(status) {
+    switch (status.toLowerCase()) {
+        case 'success':
+            return types_1.OperationStatus.SUCCESS;
+        case 'error':
+            return types_1.OperationStatus.ERROR;
+        case 'timeout':
+            return types_1.OperationStatus.TIMEOUT;
+        case 'cancelled':
+            return types_1.OperationStatus.CANCELLED;
+        case 'running':
+            return types_1.OperationStatus.RUNNING;
+        default:
+            return types_1.OperationStatus.UNKNOWN;
     }
 }

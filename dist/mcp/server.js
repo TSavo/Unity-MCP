@@ -10,6 +10,7 @@ const body_parser_1 = __importDefault(require("body-parser"));
 const routes_1 = __importDefault(require("./routes"));
 const discovery_1 = require("./discovery");
 const error_handler_1 = require("./middleware/error-handler");
+const logger_1 = __importDefault(require("../utils/logger"));
 /**
  * MCP Server Implementation
  */
@@ -53,7 +54,7 @@ class MCPServer {
      */
     start() {
         this.app.listen(this.port, () => {
-            console.log(`MCP Server running on port ${this.port}`);
+            logger_1.default.info(`MCP Server running on port ${this.port}`);
         });
     }
     /**
@@ -62,7 +63,7 @@ class MCPServer {
     stop() {
         // Stop advertising the server
         this.discovery.stopAdvertising(this.serverUrl);
-        console.log(`MCP Server stopped`);
+        logger_1.default.info(`MCP Server stopped`);
     }
     /**
      * Advertise the server on the network

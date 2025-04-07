@@ -6,7 +6,7 @@ import { OperationResult, OperationInfo, OperationStatus } from './types';
  * Stores and retrieves operation results.
  */
 export class ResultStorage {
-  private results: Map<string, OperationResult> = new Map();
+  private results: Map<string, OperationResult<any>> = new Map();
   private runningOperations: Map<string, { cancel: () => void }> = new Map();
 
   /**
@@ -15,14 +15,14 @@ export class ResultStorage {
    * @param logId Log ID
    * @param result Operation result
    */
-  public storeResult(logId: string, result: OperationResult): void;
+  public storeResult(logId: string, result: OperationResult<any>): void;
 
   /**
    * Store a result
    *
-   * @param result Operation result with log_id
+   * @param result Operation result with logId
    */
-  public storeResult(result: OperationResult): void;
+  public storeResult(result: OperationResult<any>): void;
 
   /**
    * Store a result
@@ -30,13 +30,13 @@ export class ResultStorage {
    * @param logIdOrResult Log ID or operation result
    * @param result Operation result (optional)
    */
-  public storeResult(logIdOrResult: string | OperationResult, result?: OperationResult): void {
+  public storeResult(logIdOrResult: string | OperationResult<any>, result?: OperationResult<any>): void {
     if (typeof logIdOrResult === 'string' && result) {
       // First overload: logId and result
       this.results.set(logIdOrResult, result);
-    } else if (typeof logIdOrResult === 'object' && logIdOrResult.log_id) {
-      // Second overload: result with log_id
-      this.results.set(logIdOrResult.log_id, logIdOrResult);
+    } else if (typeof logIdOrResult === 'object' && logIdOrResult.logId) {
+      // Second overload: result with logId
+      this.results.set(logIdOrResult.logId, logIdOrResult);
     } else {
       throw new Error('Invalid arguments to storeResult');
     }
@@ -48,7 +48,7 @@ export class ResultStorage {
    * @param logId Log ID
    * @returns Operation result or null if not found
    */
-  public getResult(logId: string): OperationResult | null {
+  public getResult(logId: string): OperationResult<any> | null {
     return this.results.get(logId) || null;
   }
 
@@ -87,8 +87,8 @@ export class ResultStorage {
       const result = this.getResult(logId);
       if (result) {
         result.status = OperationStatus.CANCELLED;
-        result.is_complete = true;
-        result.end_time = Date.now();
+        result.isComplete = true;
+        result.endTime = Date.now();
         result.message = 'Operation cancelled by user';
         this.storeResult(logId, result);
       }
@@ -105,12 +105,12 @@ export class ResultStorage {
    */
   public listOperations(): OperationInfo[] {
     return Array.from(this.results.entries()).map(([logId, result]) => ({
-      log_id: logId,
+      logId: logId,
       status: result.status,
-      is_complete: result.is_complete,
-      start_time: result.start_time || 0,
-      end_time: result.end_time,
-      operation_type: typeof result.result
+      isComplete: result.isComplete,
+      startTime: result.startTime || 0,
+      endTime: result.endTime,
+      operationType: typeof result.result
     }));
   }
 
