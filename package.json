@@ -24,6 +24,7 @@
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.1",
     "@types/jest": "^29.5.14",
+    "@types/nedb": "^1.8.16",
     "@types/node": "^22.14.0",
     "@types/supertest": "^6.0.3",
     "@types/uuid": "^10.0.0",
@@ -38,6 +39,7 @@
     "body-parser": "^2.2.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",
+    "nedb": "^1.8.0",
     "uuid": "^11.1.0",
     "winston": "^3.17.0"
   }

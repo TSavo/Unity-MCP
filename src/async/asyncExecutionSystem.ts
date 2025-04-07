@@ -1,6 +1,8 @@
 import { Operation } from './operation';
 import { OperationRegistry } from './operationRegistry';
 import { OperationExecutor, OperationInfo, OperationOptions, OperationResult, OperationStatus } from './types';
+import { StorageAdapter } from './storage/StorageAdapter';
+import { StorageAdapterFactory, StorageAdapterFactoryOptions } from './storage/StorageAdapterFactory';
 import logger from '../utils/logger';
 
 /**
@@ -10,6 +12,7 @@ import logger from '../utils/logger';
  */
 export class AsyncExecutionSystem {
   private readonly registry: OperationRegistry;
+  private readonly storage: StorageAdapter;
   private readonly defaultOptions: Partial<OperationOptions> = {
     timeoutMs: 30000 // Default timeout: 30 seconds
   };
@@ -23,11 +26,15 @@ export class AsyncExecutionSystem {
    * @param maxOperationAge Optional maximum operation age in milliseconds
    */
   constructor(
-    registry?: OperationRegistry,
+    storageOptions: StorageAdapterFactoryOptions = {},
     cleanupInterval: number = 60000, // Default: 1 minute
     private readonly maxOperationAge: number = 3600000 // Default: 1 hour
   ) {
-    this.registry = registry || new OperationRegistry();
+    // Create the storage adapter
+    this.storage = StorageAdapterFactory.createAdapter(storageOptions);
+
+    // Create the registry
+    this.registry = new OperationRegistry(this.storage);
 
     // Start the cleanup interval
     if (cleanupInterval > 0) {
@@ -55,13 +62,18 @@ export class AsyncExecutionSystem {
 
       // Create and register the operation
       const operation = new Operation<T>(executor, mergedOptions);
-      this.registry.registerOperation(operation);
+      await this.registry.registerOperation(operation);
 
       // Execute the operation
       const result = await operation.execute();
 
-      // Keep the operation registered so we can retrieve it later
-      // Only unregister it during cleanup
+      // Store the result
+      await this.storage.storeResult(result);
+
+      // If the operation is complete, unregister it
+      if (result.isComplete) {
+        await this.registry.unregisterOperation(result.logId);
+      }
 
       return result;
     } catch (error) {
@@ -83,7 +95,8 @@ export class AsyncExecutionSystem {
    */
   public async getResult<T>(logId: string): Promise<OperationResult<T>> {
     try {
-      const result = this.registry.getOperationResult<T>(logId);
+      // Try to get the result from the registry
+      const result = await this.registry.getOperationResult<T>(logId);
 
       if (!result) {
         return {
@@ -114,7 +127,8 @@ export class AsyncExecutionSystem {
    */
   public async cancelOperation(logId: string): Promise<OperationResult> {
     try {
-      const cancelled = this.registry.cancelOperation(logId);
+      // Try to cancel the operation
+      const cancelled = await this.registry.cancelOperation(logId);
 
       if (!cancelled) {
         return {
@@ -151,7 +165,7 @@ export class AsyncExecutionSystem {
    * @returns Array of operation info
    */
   public async listOperations(): Promise<OperationInfo[]> {
-    return this.registry.listOperations();
+    return await this.registry.listOperations();
   }
 
   /**
@@ -166,9 +180,9 @@ export class AsyncExecutionSystem {
     }
 
     // Start a new interval
-    this.cleanupInterval = setInterval(() => {
+    this.cleanupInterval = setInterval(async () => {
       try {
-        this.registry.cleanupCompletedOperations(this.maxOperationAge);
+        await this.registry.cleanupCompletedOperations(this.maxOperationAge);
       } catch (error) {
         logger.error(`Error cleaning up operations: ${error instanceof Error ? error.message : String(error)}`);
       }
@@ -193,7 +207,8 @@ export class AsyncExecutionSystem {
   /**
    * Dispose of the AsyncExecutionSystem
    */
-  public dispose(): void {
+  public async dispose(): Promise<void> {
     this.stopCleanupInterval();
+    await this.storage.close();
   }
 }

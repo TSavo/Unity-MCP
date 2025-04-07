@@ -2,19 +2,27 @@ import { Request, Response } from 'express';
 import { MCPTool, MCPToolRequest, MCPToolResponse } from '../types';
 import { AsyncExecutionSystem } from '../../async/asyncExecutionSystem';
 import { OperationExecutor, OperationStatus } from '../../async/types';
+import { StorageAdapterFactoryOptions } from '../../async/storage/StorageAdapterFactory';
+import path from 'path';
 import logger from '../../utils/logger';
 
-// Create an instance of the AsyncExecutionSystem
-const asyncExecutionSystem = new AsyncExecutionSystem();
+// Create storage options
+const storageOptions: StorageAdapterFactoryOptions = {
+  type: 'nedb',
+  dbPath: path.join(process.cwd(), 'data', 'operations')
+};
+
+// Create an instance of the AsyncExecutionSystem with persistent storage
+const asyncExecutionSystem = new AsyncExecutionSystem(storageOptions);
 
 // Clean up resources when the process exits
-process.on('exit', () => {
-  asyncExecutionSystem.dispose();
+process.on('exit', async () => {
+  await asyncExecutionSystem.dispose();
 });
 
 // Handle SIGINT (Ctrl+C)
-process.on('SIGINT', () => {
-  asyncExecutionSystem.dispose();
+process.on('SIGINT', async () => {
+  await asyncExecutionSystem.dispose();
   process.exit(0);
 });
 
