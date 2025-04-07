@@ -21,9 +21,39 @@ Unity-MCP is an open-source implementation of the Model Context Protocol for Uni
 - Docker Container: A containerized version that communicates with Unity over the network
 - NPX Package: A Node.js package that can be installed and run via NPX
 
+## Documentation
+
+- [MCP Server Documentation](docs/mcp-server.md): Detailed information about the MCP server architecture and features
+- [API Reference](docs/api-reference.md): Detailed information about the API endpoints
+- [Installation Guide](docs/installation.md): Step-by-step instructions for installing and setting up the MCP server
+- [Contributing Guide](docs/contributing-guide.md): Guidelines for contributing to the project
+
 ## Getting Started
 
-*Documentation coming soon*
+To get started with Unity-MCP, follow these steps:
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/TSavo/Unity-MCP.git
+   cd Unity-MCP
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Build the project:
+   ```bash
+   npm run build
+   ```
+
+4. Start the server:
+   ```bash
+   npm start
+   ```
+
+For more detailed instructions, see the [Installation Guide](docs/installation.md).
 
 ## License
 
