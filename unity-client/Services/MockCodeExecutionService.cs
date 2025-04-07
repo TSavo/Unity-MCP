@@ -27,7 +27,7 @@ namespace UnityMCP.Client.Services
         /// <returns>The execution result</returns>
         public async Task<CodeExecutionResult> ExecuteCodeAsync(string code, int timeout = 1000)
         {
-            _logService.Log($"Executing code with timeout {timeout}ms: {code.Substring(0, Math.Min(100, code.Length))}{(code.Length > 100 ? "..." : "")}", LogSeverity.Debug);
+            // Logging is now handled by the decorator
 
             // Simulate execution delay
             int executionTime = _random.Next(10, 200);
@@ -38,7 +38,7 @@ namespace UnityMCP.Client.Services
                 // Try to parse and evaluate the code (very limited mock implementation)
                 var result = MockEvaluateCode(code);
 
-                _logService.Log("Code executed successfully", LogSeverity.Info);
+                // Logging is now handled by the decorator
 
                 return new CodeExecutionResult
                 {

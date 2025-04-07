@@ -42,8 +42,6 @@ namespace UnityMCP.Client.Controllers
                 return BadRequest("Code is required");
             }
 
-            _logService.Log($"Executing code with timeout {request.Timeout}ms", LogSeverity.Info);
-
             var result = await _codeExecutionService.ExecuteCodeAsync(request.Code, request.Timeout);
 
             return Ok(result);
@@ -58,7 +56,7 @@ namespace UnityMCP.Client.Controllers
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetEnvironmentInfo()
         {
-            _logService.Log("Getting environment info", LogSeverity.Info);
+            // Logging is now handled by the decorator
 
             var info = await _codeExecutionService.GetEnvironmentInfoAsync();
 

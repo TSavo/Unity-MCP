@@ -3,7 +3,6 @@ using Autofac.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
 using UnityMCP.Client.Config;
 using UnityMCP.Client.DI;
-using UnityMCP.Client.Services;
 using UnityMCP.Client.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);

@@ -26,31 +26,69 @@ namespace UnityMCP.Client.DI
         /// <param name="builder">Container builder</param>
         protected override void Load(ContainerBuilder builder)
         {
-            // Register services
+            // Register the base log service
             builder.RegisterType<LogService>()
-                .As<ILogService>()
+                .Named<ILogService>("baseLogService")
                 .WithParameter("maxLogCount", _appConfig.MaxLogCount)
                 .SingleInstance();
 
-            // Register the code execution service factory
-            builder.RegisterType<CodeExecutionServiceFactory>()
-                .AsSelf()
+            // Register the security decorator for the log service
+            builder.RegisterType<SecurityLoggingDecorator>()
+                .Named<ILogService>("securityLogService")
+                .WithParameter(
+                    (pi, ctx) => pi.Name == "decorated",
+                    (pi, ctx) => ctx.ResolveNamed<ILogService>("baseLogService"))
                 .SingleInstance();
 
-            // Register the appropriate code execution service based on configuration
+            // Register the performance decorator for the log service
+            builder.RegisterType<PerformanceLoggingDecorator>()
+                .As<ILogService>()
+                .WithParameter(
+                    (pi, ctx) => pi.Name == "decorated",
+                    (pi, ctx) => ctx.ResolveNamed<ILogService>("securityLogService"))
+                .SingleInstance();
+
+            // Register the base code execution service based on configuration
             if (_appConfig.CodeExecutionServiceType == "Mock")
             {
                 builder.RegisterType<MockCodeExecutionService>()
-                    .As<ICodeExecutionService>()
+                    .Named<ICodeExecutionService>("baseCodeExecutionService")
                     .SingleInstance();
             }
             else
             {
                 // When we have a real Unity implementation, register it here
                 builder.RegisterType<MockCodeExecutionService>()
-                    .As<ICodeExecutionService>()
+                    .Named<ICodeExecutionService>("baseCodeExecutionService")
                     .SingleInstance();
             }
+
+            // Register the security decorator for the code execution service
+            builder.RegisterType<SecurityCodeExecutionDecorator>()
+                .Named<ICodeExecutionService>("securityCodeExecutionService")
+                .WithParameter(
+                    (pi, ctx) => pi.Name == "decorated",
+                    (pi, ctx) => ctx.ResolveNamed<ICodeExecutionService>("baseCodeExecutionService"))
+                .SingleInstance();
+
+            // Register the logging decorator for the code execution service
+            builder.RegisterType<LoggingCodeExecutionDecorator>()
+                .Named<ICodeExecutionService>("loggingCodeExecutionService")
+                .WithParameter(
+                    (pi, ctx) => pi.Name == "decorated",
+                    (pi, ctx) => ctx.ResolveNamed<ICodeExecutionService>("securityCodeExecutionService"))
+                .SingleInstance();
+
+            // Register the caching decorator for the code execution service
+            builder.RegisterType<CachingCodeExecutionDecorator>()
+                .As<ICodeExecutionService>()
+                .WithParameter(
+                    (pi, ctx) => pi.Name == "decorated",
+                    (pi, ctx) => ctx.ResolveNamed<ICodeExecutionService>("loggingCodeExecutionService"))
+                .WithParameter(
+                    (pi, ctx) => pi.Name == "cacheDurationSeconds",
+                    (pi, ctx) => 60)
+                .SingleInstance();
         }
     }
 }
