@@ -129,8 +129,8 @@ namespace UnityMCP.Client.Services
                     return new { result = 42 };
                 }
 
-                // For other code, return a mock object
-                return new { mockResult = true, code };
+                // For other code, return a mock object with updated information
+                return new { mockResult = true, code, message = "This is a custom mock response added during hot reloading test!", timestamp = DateTime.Now.ToString(), version = "2.0.0" };
             }
             catch (Exception ex)
             {

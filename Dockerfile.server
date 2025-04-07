@@ -1,0 +1,28 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy package.json and package-lock.json
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci
+
+# Copy source code
+COPY tsconfig.json ./
+COPY src ./src
+
+# Build TypeScript code
+RUN npm run build
+
+# Expose port 8080
+EXPOSE 8080
+
+# Set environment variables
+ENV NODE_ENV=production
+
+# Create data directory for NeDB
+RUN mkdir -p data/operations
+
+# Start the server
+CMD ["node", "dist/mcp/server.js"]

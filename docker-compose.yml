@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  mcp-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    container_name: mcp-server
+    ports:
+      - "8080:8080"
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - mcp-data:/app/data
+    networks:
+      - mcp-network
+    restart: unless-stopped
+
+  unity-client:
+    build:
+      context: .
+      dockerfile: Dockerfile.unity-client
+    container_name: unity-client
+    ports:
+      - "8081:8081"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    networks:
+      - mcp-network
+    depends_on:
+      - mcp-server
+    restart: unless-stopped
+
+  # Note: The MCP STDIO client is not included in Docker Compose
+  # because Claude needs to run it directly, not through Docker
+
+networks:
+  mcp-network:
+    driver: bridge
+
+volumes:
+  mcp-data:
+    driver: local

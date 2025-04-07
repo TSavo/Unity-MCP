@@ -1,0 +1,28 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy package.json and package-lock.json
+COPY package*.json ./
+
+# Install dependencies including development dependencies
+RUN npm install
+
+# Install nodemon for auto-reloading
+RUN npm install -g nodemon
+
+# Create data directory for NeDB
+RUN mkdir -p data/operations
+
+# Expose port 8080
+EXPOSE 8080
+
+# Set environment variables
+ENV NODE_ENV=development
+ENV NODEMON_LEGACY_WATCH=true
+
+# Create nodemon.json for better hot reloading with polling
+RUN echo '{"verbose":true,"watch":["dist"],"ext":"js,json","ignore":["node_modules","logs"],"delay":"500","execMap":{"js":"node"},"legacyWatch":true,"poll":1000}' > /app/nodemon.json
+
+# Start the server with nodemon for auto-reloading
+CMD ["nodemon", "dist/server.js"]

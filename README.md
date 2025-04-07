@@ -26,6 +26,10 @@ Unity-MCP is an open-source implementation of the Model Context Protocol for Uni
 - [MCP Server Documentation](docs/mcp-server.md): Detailed information about the MCP server architecture and features
 - [API Reference](docs/api-reference.md): Detailed information about the API endpoints
 - [Installation Guide](docs/installation.md): Step-by-step instructions for installing and setting up the MCP server
+- [Development Guide](docs/development.md): Information about the development environment and workflow
+- [Hot Reloading Guide](docs/hot-reloading.md): Detailed information about hot reloading in the development environment
+- [Hot Reloading Quick Reference](docs/hot-reloading-quick-reference.md): Quick reference guide for hot reloading commands and tips
+- [MCP STDIO Client](docs/mcp-stdio-client.md): Information about the MCP STDIO client and its logging capabilities
 - [Contributing Guide](docs/contributing-guide.md): Guidelines for contributing to the project
 
 ## Getting Started
@@ -48,18 +52,29 @@ To get started with Unity-MCP, follow these steps:
    npm run build
    ```
 
-4. Start the TypeScript MCP server:
+4. Start the development environment (recommended for development):
    ```bash
-   npm start
+   # On Linux/macOS
+   ./run-dev.sh
+
+   # On Windows
+   .\run-dev.ps1
    ```
 
-5. Start the C# Unity client:
+   This will start the TypeScript compiler in watch mode, build and start the Docker containers, and watch for changes in both TypeScript and C# code. For more information, see the [Development Guide](docs/development.md).
+
+   Alternatively, you can start the services manually:
+
    ```bash
+   # Start the TypeScript MCP server
+   npm start
+
+   # In a separate terminal, start the C# Unity client
    cd unity-client
    dotnet run
    ```
 
-6. Run tests:
+5. Run tests:
    ```bash
    # Run all tests
    npm test

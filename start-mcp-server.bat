@@ -1,0 +1,3 @@
+@echo off
+echo Starting Unity-MCP Server...
+powershell -ExecutionPolicy Bypass -File "%~dp0start-mcp-server.ps1"

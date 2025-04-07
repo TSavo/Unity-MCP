@@ -1,0 +1,25 @@
+FROM mcr.microsoft.com/dotnet/sdk:8.0
+
+WORKDIR /app
+
+# Copy csproj and restore dependencies
+COPY unity-client/*.csproj ./
+RUN dotnet restore
+
+# Expose port 8081
+EXPOSE 8081
+
+# Set environment variables
+ENV ASPNETCORE_URLS=http://+:8081
+ENV ASPNETCORE_ENVIRONMENT=Development
+
+# Install dotnet-watch tool for better hot reloading
+RUN dotnet tool install --global dotnet-watch
+
+# Add environment variables for better hot reload experience
+ENV DOTNET_USE_POLLING_FILE_WATCHER=true
+ENV ASPNETCORE_HOSTINGSTARTUPASSEMBLIES=Microsoft.AspNetCore.Watch.BrowserRefresh
+ENV DOTNET_WATCH_RESTART_ON_RUDE_EDIT=true
+
+# Start the application with dotnet watch for auto-reloading
+CMD ["dotnet", "watch", "run", "--project", ".", "--no-restore"]

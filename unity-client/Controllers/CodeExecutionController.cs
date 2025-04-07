@@ -62,5 +62,19 @@ namespace UnityMCP.Client.Controllers
 
             return Ok(info);
         }
+
+        /// <summary>
+        /// Get status of the code execution service
+        /// </summary>
+        /// <returns>Status information</returns>
+        [HttpGet("status")]
+        [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public IActionResult GetStatus()
+        {
+            _logService.Log("Status endpoint called", LogSeverity.Info);
+
+            return Ok("Code execution service is running with hot reload enabled!");
+        }
     }
 }

@@ -1,0 +1,3 @@
+@echo off
+echo Starting Unity-MCP Bridge...
+powershell -ExecutionPolicy Bypass -File "%~dp0start-unity-mcp.ps1"

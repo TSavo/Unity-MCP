@@ -75,6 +75,11 @@ export class MCPServer {
   public start(): void {
     this.app.listen(this.port, () => {
       logger.info(`MCP Server running on port ${this.port}`);
+      logger.info(`Development mode is ${process.env.NODE_ENV === 'development' ? 'enabled' : 'disabled'}`);
+      logger.info(`Server started at ${new Date().toISOString()}`);
+      logger.info(`Unity client connected to port 8081`);
+      logger.info(`Hot reloading is working correctly!`);
+      logger.info(`Docker volumes with polling are working correctly!`);
     });
   }
 

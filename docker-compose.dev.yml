@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  mcp-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server.dev
+    container_name: mcp-server-dev
+    ports:
+      - "8080:8080"
+    environment:
+      - NODE_ENV=development
+      - UNITY_HOST=unity-client-dev
+    volumes:
+      - ./src:/app/src:cached
+      - ./dist:/app/dist:cached
+      - ./package.json:/app/package.json:cached
+      - ./package-lock.json:/app/package-lock.json:cached
+      - ./tsconfig.json:/app/tsconfig.json:cached
+      - mcp-data:/app/data
+    networks:
+      - mcp-network
+    restart: unless-stopped
+    # Use tsc --watch in a separate terminal to compile TypeScript code incrementally
+    # This container will automatically reload when the compiled JS files change
+
+  unity-client:
+    build:
+      context: .
+      dockerfile: Dockerfile.unity-client.dev
+    container_name: unity-client-dev
+    ports:
+      - "8081:8081"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    volumes:
+      - ./unity-client:/app:cached
+    networks:
+      - mcp-network
+    depends_on:
+      - mcp-server
+    restart: unless-stopped
+    # dotnet watch will automatically detect changes and rebuild/restart the application
+
+  # Note: The MCP STDIO client is not included in Docker Compose
+  # because Claude needs to run it directly, not through Docker
+
+networks:
+  mcp-network:
+    driver: bridge
+
+volumes:
+  mcp-data:
+    driver: local
