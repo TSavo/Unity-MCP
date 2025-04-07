@@ -3,6 +3,7 @@ import { MCPTool, MCPToolRequest, MCPToolResponse } from '../types';
 import { AsyncExecutionSystem } from '../../async/asyncExecutionSystem';
 import { OperationExecutor, OperationStatus, OperationResult } from '../../async/types';
 import { StorageAdapterFactoryOptions } from '../../async/storage/StorageAdapterFactory';
+import { UnityClientFactory, UnityToolImplementation } from '../../unity';
 import path from 'path';
 import logger from '../../utils/logger';
 
@@ -14,6 +15,16 @@ const storageOptions: StorageAdapterFactoryOptions = {
 
 // Create an instance of the AsyncExecutionSystem with persistent storage
 const asyncExecutionSystem = new AsyncExecutionSystem(storageOptions);
+
+// Create a Unity client
+const unityClient = UnityClientFactory.createClient({
+  host: process.env.UNITY_HOST || 'localhost',
+  port: parseInt(process.env.UNITY_PORT || '8081'),
+  resilient: true
+});
+
+// Create a Unity tool implementation
+const unityToolImplementation = new UnityToolImplementation(unityClient);
 
 // Clean up resources when the process exits
 process.on('exit', async () => {
@@ -222,8 +233,23 @@ async function executeToolImplementation(
   reportProgress: (progress: any) => void,
   tools: MCPTool[]
 ): Promise<any> {
-  // For now, just return a mock response
-  // In a real implementation, this would delegate to the appropriate handler
+  // Check if this is a Unity tool
+  if (tool.id.startsWith('unity_') &&
+      (tool.id === 'unity_execute_code' || tool.id === 'unity_query')) {
+    try {
+      // Forward to Unity tool implementation
+      return await unityToolImplementation.executeUnityTool(
+        tool.id,
+        parameters,
+        reportProgress
+      );
+    } catch (error) {
+      logger.error(`Error executing Unity tool: ${error instanceof Error ? error.message : String(error)}`);
+      throw error;
+    }
+  }
+
+  // Handle other tools
   switch (tool.id) {
     case 'unity_help':
       return {
@@ -234,33 +260,27 @@ async function executeToolImplementation(
         }))
       };
 
-    case 'unity_execute_code':
-      // Simulate progress reporting
-      reportProgress({ status: 'compiling' });
-      await new Promise(resolve => setTimeout(resolve, 50));
-
-      reportProgress({ status: 'executing' });
-      await new Promise(resolve => setTimeout(resolve, 50));
-
+    case 'unity_get_logs':
       return {
-        message: `Code executed: ${parameters.code}`,
-        output: 'Mock output from code execution'
+        logs: [
+          { id: 'log1', message: 'Test log 1', timestamp: new Date().toISOString(), type: 'info' },
+          { id: 'log2', message: 'Test log 2', timestamp: new Date().toISOString(), type: 'warning' }
+        ]
       };
 
-    case 'unity_query':
-      // Simulate progress reporting
-      reportProgress({ status: 'querying' });
-      await new Promise(resolve => setTimeout(resolve, 50));
-
+    case 'unity_get_log_details':
       return {
-        message: `Query executed: ${parameters.query}`,
-        result: 'Mock result from query'
+        id: parameters.log_id,
+        message: 'Detailed log message',
+        timestamp: new Date().toISOString(),
+        type: 'info',
+        stackTrace: 'Stack trace...',
+        context: { scene: 'Main' }
       };
 
     default:
-      return {
-        message: `Tool ${tool.id} executed with parameters: ${JSON.stringify(parameters)}`
-      };
+      logger.warn(`Unsupported tool: ${tool.id}`);
+      throw new Error(`Unsupported tool: ${tool.id}`);
   }
 }
 

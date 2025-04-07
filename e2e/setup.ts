@@ -3,6 +3,39 @@ import { AddressInfo } from 'net';
 import http from 'http';
 import { Server } from 'http';
 import logger from '../src/utils/logger';
+import { MockUnityClient } from '../src/unity/MockUnityClient';
+import { UnityClientFactory } from '../src/unity/UnityClientFactory';
+
+// Set up environment for e2e tests
+process.env.NODE_ENV = 'test';
+process.env.UNITY_MOCK = 'true';
+process.env.UNITY_MOCK_DELAY = '50';
+process.env.UNITY_MOCK_FAILURE_RATE = '0';
+
+// Create a mock Unity client that always returns success
+const mockClient = UnityClientFactory.createMockClient({
+  connected: true,
+  executionDelay: 50,
+  failureRate: 0
+});
+
+// Override the checkConnection method to always return true
+const originalCheckConnection = mockClient.checkConnection;
+mockClient.checkConnection = async () => true;
+
+// Override the executeCode method to always return success
+const originalExecuteCode = mockClient.executeCode;
+mockClient.executeCode = async (code, timeout) => {
+  return {
+    success: true,
+    result: { mockResult: true, message: 'Mock result for testing' },
+    logs: ['[MOCK] Code executed successfully in test mode'],
+    executionTime: 50
+  };
+};
+
+// Monkey patch the factory to always return our mock client
+UnityClientFactory.createClient = () => mockClient;
 
 // Global variables for e2e tests
 declare global {
