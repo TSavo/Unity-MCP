@@ -1,4 +1,8 @@
-﻿using Microsoft.OpenApi.Models;
+﻿using Autofac;
+using Autofac.Extensions.DependencyInjection;
+using Microsoft.OpenApi.Models;
+using UnityMCP.Client.Config;
+using UnityMCP.Client.DI;
 using UnityMCP.Client.Services;
 using UnityMCP.Client.Middleware;
 
@@ -17,9 +21,18 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Register services
-builder.Services.AddSingleton<ICodeExecutionService, MockCodeExecutionService>();
-builder.Services.AddSingleton<ILogService, LogService>();
+// Configure AppConfig from appsettings.json
+var appConfig = new AppConfig();
+builder.Configuration.GetSection("AppConfig").Bind(appConfig);
+builder.Services.AddSingleton(appConfig);
+
+// Use Autofac as the DI container
+builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
+builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
+{
+    // Register modules
+    containerBuilder.RegisterModule(new ServiceModule(appConfig));
+});
 
 var app = builder.Build();
 

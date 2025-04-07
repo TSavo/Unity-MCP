@@ -8,6 +8,7 @@ namespace UnityMCP.Client.Services
     public class LogService : ILogService
     {
         private readonly List<LogEntry> _logs = new List<LogEntry>();
+        private readonly int _maxLogCount;
         private readonly object _lock = new object();
         private readonly ILogger<LogService> _logger;
 
@@ -15,9 +16,11 @@ namespace UnityMCP.Client.Services
         /// Constructor
         /// </summary>
         /// <param name="logger">Logger</param>
-        public LogService(ILogger<LogService> logger)
+        /// <param name="maxLogCount">Maximum number of logs to keep in memory</param>
+        public LogService(ILogger<LogService> logger, int maxLogCount = 1000)
         {
             _logger = logger;
+            _maxLogCount = maxLogCount;
         }
 
         /// <summary>
@@ -37,6 +40,12 @@ namespace UnityMCP.Client.Services
             lock (_lock)
             {
                 _logs.Add(entry);
+
+                // Trim logs if we exceed the maximum count
+                if (_logs.Count > _maxLogCount)
+                {
+                    _logs.RemoveRange(0, _logs.Count - _maxLogCount);
+                }
             }
 
             // Also log to the built-in logger
@@ -75,6 +84,12 @@ namespace UnityMCP.Client.Services
             lock (_lock)
             {
                 _logs.Add(entry);
+
+                // Trim logs if we exceed the maximum count
+                if (_logs.Count > _maxLogCount)
+                {
+                    _logs.RemoveRange(0, _logs.Count - _maxLogCount);
+                }
             }
 
             // Also log to the built-in logger
