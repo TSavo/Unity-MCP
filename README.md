@@ -48,12 +48,18 @@ To get started with Unity-MCP, follow these steps:
    npm run build
    ```
 
-4. Start the server:
+4. Start the TypeScript MCP server:
    ```bash
    npm start
    ```
 
-5. Run tests:
+5. Start the C# Unity client:
+   ```bash
+   cd unity-client
+   dotnet run
+   ```
+
+6. Run tests:
    ```bash
    # Run all tests
    npm test
@@ -71,6 +77,43 @@ To get started with Unity-MCP, follow these steps:
    ```
 
 For more detailed instructions, see the [Installation Guide](docs/installation.md).
+
+## Connecting to AI Assistants
+
+To connect the Unity-MCP bridge to an AI assistant, you need to create an MCP configuration file:
+
+```json
+{
+  "mcpServers": {
+    "unity-ai-bridge": {
+      "url": "http://localhost:8080/sse"
+    }
+  }
+}
+```
+
+Place this file in the appropriate location for your AI assistant. For Claude, this would typically be in the Claude Desktop app's configuration directory.
+
+### Available Tools
+
+The Unity-MCP bridge provides the following tools:
+
+1. **unity_execute_code**: Execute C# code directly in Unity.
+2. **unity_query**: Execute a query using dot notation to access objects, properties, and methods.
+3. **unity_get_result**: Retrieve the result of a previously executed operation.
+4. **unity_get_logs**: Retrieve logs from Unity.
+5. **unity_get_log_details**: Retrieve detailed information about a specific log entry.
+6. **unity_help**: Get documentation on the available commands and query syntax.
+
+### Example Usage
+
+Once the AI assistant has access to the Unity tool, you can ask it to perform tasks like:
+
+```
+Can you execute the following C# code in Unity?
+
+GameObject.Find("Player").transform.position = new Vector3(0, 1, 0);
+```
 
 ## License
 

@@ -142,3 +142,8 @@
 {"status":"success","logId":"04e679db-6ca6-4ea7-ae80-c391c7a80f22","result":{"result":{"result":42},"logs":["[MOCK] Code executed successfully"],"executionTime":52},"isComplete":true,"startTime":1744017456080,"endTime":1744017456151,"message":"Operation completed successfully","_id":"rz0fWot0Vs78rDoE"}
 {"status":"success","logId":"b95fd875-7512-4b18-8638-b131e2262b6f","result":{"result":{"mockResult":true,"code":"result"},"logs":["[MOCK] Code executed successfully"],"executionTime":195},"isComplete":true,"startTime":1744017483590,"endTime":1744017483790,"message":"Operation completed successfully","_id":"BNZTfOcV3d1XV31N"}
 {"$$deleted":true,"_id":"73383bJuhA2D1DhE"}
+{"$$deleted":true,"_id":"7UQCW6ckfOJJy0L6"}
+{"$$deleted":true,"_id":"AZn7j620N5AWwuq6"}
+{"$$deleted":true,"_id":"CkpxSfOr6u7gYbAe"}
+{"$$deleted":true,"_id":"DFYMc4v9d1COKDYH"}
+{"$$deleted":true,"_id":"EqC6iJpKvTzOZNfy"}
