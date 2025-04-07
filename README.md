@@ -53,6 +53,23 @@ To get started with Unity-MCP, follow these steps:
    npm start
    ```
 
+5. Run tests:
+   ```bash
+   # Run all tests
+   npm test
+
+   # Run only unit tests
+   npm run test:unit
+
+   # Run only e2e tests
+   npm run test:e2e
+
+   # Run tests with a specific pattern
+   npm test -- --testNamePattern="should return the server manifest"
+   npm run test:unit -- --testNamePattern="should return the server manifest"
+   npm run test:e2e -- --testNamePattern="should discover the test server"
+   ```
+
 For more detailed instructions, see the [Installation Guide](docs/installation.md).
 
 ## License
