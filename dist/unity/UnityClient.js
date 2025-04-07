@@ -66,6 +66,45 @@ class UnityClient {
         }
     }
     /**
+     * Execute a query in Unity
+     * @param query The query to execute
+     * @param timeout Optional timeout in milliseconds
+     * @returns A promise that resolves with the query result
+     */
+    async query(query, timeout = 1000) {
+        try {
+            logger_1.default.debug(`Executing query in Unity with timeout ${timeout}ms`);
+            const startTime = Date.now();
+            const response = await this.axios.post('/api/CodeExecution/query', {
+                query,
+                timeout
+            });
+            const executionTime = Date.now() - startTime;
+            logger_1.default.debug(`Unity query execution completed in ${executionTime}ms`);
+            return {
+                success: response.data.success,
+                result: response.data.result,
+                error: response.data.error,
+                logs: response.data.logs,
+                executionTime
+            };
+        }
+        catch (error) {
+            if (axios_1.default.isAxiosError(error) && error.response) {
+                logger_1.default.error(`Unity query failed: ${error.response.data.error || error.message}`);
+                return {
+                    success: false,
+                    error: `Unity query failed: ${error.response.data.error || error.message}`
+                };
+            }
+            logger_1.default.error(`Failed to communicate with Unity: ${error instanceof Error ? error.message : String(error)}`);
+            return {
+                success: false,
+                error: `Failed to communicate with Unity: ${error instanceof Error ? error.message : String(error)}`
+            };
+        }
+    }
+    /**
      * Check if Unity is connected and responsive
      * @returns A promise that resolves with the connection status
      */

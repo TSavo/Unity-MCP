@@ -6,6 +6,8 @@ A bridge between Unity and AI assistants using the Model Context Protocol (MCP).
 
 Unity-MCP is an open-source implementation of the Model Context Protocol for Unity game development. It enables AI assistants to interact with Unity game environments through a standardized interface, allowing for AI-assisted game development, automated testing, scene analysis, and runtime debugging.
 
+The architecture has been simplified to use AILogger for persistence, removing the need for a separate server component.
+
 ## Features
 
 - Execute C# code in the Unity runtime environment
@@ -55,27 +57,14 @@ To get started with Unity-MCP, follow these steps:
    npm run build
    ```
 
-4. Start the development environment (recommended for development):
+4. Start the MCP STDIO client:
    ```bash
-   # On Linux/macOS
-   ./run-dev.sh
-
-   # On Windows
-   .\run-dev.ps1
-   ```
-
-   This will start the TypeScript compiler in watch mode, build and start the Docker containers, and watch for changes in both TypeScript and C# code. For more information, see the [Development Guide](docs/development.md).
-
-   Alternatively, you can start the services manually:
-
-   ```bash
-   # Start the TypeScript MCP server
    npm start
-
-   # In a separate terminal, start the C# Unity client
-   cd unity-client
-   dotnet run
    ```
+
+   This will start the MCP STDIO client that communicates with Unity and uses AILogger for persistence.
+
+   Note: Make sure AILogger is running on http://localhost:8080 or set the AI_LOGGER_URL environment variable to point to your AILogger instance.
 
 5. Run tests:
    ```bash
@@ -116,12 +105,10 @@ Place this file in the appropriate location for your AI assistant. For Claude, t
 
 The Unity-MCP bridge provides the following tools:
 
-1. **unity_execute_code**: Execute C# code directly in Unity.
-2. **unity_query**: Execute a query using dot notation to access objects, properties, and methods.
-3. **unity_get_result**: Retrieve the result of a previously executed operation.
-4. **unity_get_logs**: Retrieve logs from Unity.
-5. **unity_get_log_details**: Retrieve detailed information about a specific log entry.
-6. **unity_help**: Get documentation on the available commands and query syntax.
+1. **execute_code**: Execute C# code directly in Unity.
+2. **query**: Execute a query using dot notation to access objects, properties, and methods.
+3. **get_logs**: Retrieve logs from AILogger.
+4. **get_log_by_name**: Retrieve a specific log from AILogger.
 
 ### Example Usage
 

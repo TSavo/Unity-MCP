@@ -119,7 +119,7 @@ namespace UnityClient.Tests
 
             var json = JsonSerializer.Serialize(logEntry);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
-            var response = await _httpClient.PostAsync($"http://mcp-server-dev:8080/logs/{logName}/append", content);
+            var response = await _httpClient.PostAsync($"http://mcp-server-dev:8080/logs/{logName}", content);
             response.EnsureSuccessStatusCode();
 
             _logger.LogInformation($"Logged data to {logName}: {json}");

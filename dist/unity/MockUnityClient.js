@@ -96,6 +96,55 @@ class MockUnityClient {
         }
     }
     /**
+     * Execute a query in Unity (mock implementation)
+     */
+    async query(query, timeout = 1000) {
+        logger_1.default.debug(`[MOCK] Executing query with timeout ${timeout}ms: ${query}`);
+        // Check if connected
+        if (!this.connected) {
+            return {
+                success: false,
+                error: 'Unity is not connected'
+            };
+        }
+        // Simulate random failures
+        if (Math.random() < this.failureRate) {
+            return {
+                success: false,
+                error: 'Random failure in Unity query'
+            };
+        }
+        // Simulate execution delay
+        if (this.executionDelay > 0) {
+            await new Promise(resolve => setTimeout(resolve, this.executionDelay));
+        }
+        // Check if execution exceeded timeout
+        if (this.executionDelay > timeout) {
+            return {
+                success: false,
+                error: `Query timed out after ${timeout}ms`
+            };
+        }
+        try {
+            // Try to parse and evaluate the query (very limited mock implementation)
+            const result = this.mockEvaluateQuery(query);
+            return {
+                success: true,
+                result,
+                logs: ['[MOCK] Query executed successfully'],
+                executionTime: this.executionDelay
+            };
+        }
+        catch (error) {
+            return {
+                success: false,
+                error: `Error executing query: ${error instanceof Error ? error.message : String(error)}`,
+                logs: [`[MOCK] Error: ${error instanceof Error ? error.message : String(error)}`],
+                executionTime: this.executionDelay
+            };
+        }
+    }
+    /**
      * Check if Unity is connected (mock implementation)
      */
     async checkConnection() {
@@ -117,6 +166,20 @@ class MockUnityClient {
      * This only handles simple expressions and is for testing purposes only
      */
     mockEvaluateCode(code) {
+        return this.mockEvaluate(code);
+    }
+    /**
+     * Mock query evaluation (very limited)
+     * This only handles simple expressions and is for testing purposes only
+     */
+    mockEvaluateQuery(query) {
+        return this.mockEvaluate(query);
+    }
+    /**
+     * Mock evaluation (very limited)
+     * This only handles simple expressions and is for testing purposes only
+     */
+    mockEvaluate(code) {
         // Extract return statement if present
         const returnMatch = code.match(/return\s+(.*?);/);
         if (returnMatch) {

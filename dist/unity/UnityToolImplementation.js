@@ -32,9 +32,9 @@ class UnityToolImplementation {
             throw new Error('Unity is not connected or not responding');
         }
         switch (toolId) {
-            case 'unity_execute_code':
+            case 'execute_code':
                 return this.executeCode(parameters.code, parameters.timeout, reportProgress);
-            case 'unity_query':
+            case 'query':
                 return this.executeQuery(parameters.query, parameters.timeout, reportProgress);
             default:
                 logger_1.default.error(`Unsupported Unity tool: ${toolId}`);

@@ -13,12 +13,8 @@
     "test:unit": "jest --testPathIgnorePatterns=e2e",
     "test:e2e": "jest --config e2e/jest.config.js",
     "build": "tsc",
-    "start": "node dist/server.js",
-    "dev": "tsc -w & nodemon dist/server.js",
-    "dev:runner": "ts-node src/dev/runner.ts",
-    "dev:docker": "docker-compose -f docker-compose.dev.yml up --build",
-    "dev:docker:down": "docker-compose -f docker-compose.dev.yml down",
-    "dev:docker:logs": "docker-compose -f docker-compose.dev.yml logs -f"
+    "start": "node dist/mcp-stdio-client-new.js",
+    "dev": "tsc -w & nodemon dist/mcp-stdio-client-new.js"
   },
   "keywords": [],
   "author": "",

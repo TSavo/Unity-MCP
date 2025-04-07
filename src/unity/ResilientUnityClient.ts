@@ -33,6 +33,13 @@ export class ResilientUnityClient implements IUnityClient {
   }
 
   /**
+   * Execute a query in Unity with retry logic
+   */
+  public async query(query: string, timeout?: number): Promise<UnityExecutionResult> {
+    return this.withRetry(() => this.client.query(query, timeout));
+  }
+
+  /**
    * Check connection with retry logic
    */
   public async checkConnection(): Promise<boolean> {

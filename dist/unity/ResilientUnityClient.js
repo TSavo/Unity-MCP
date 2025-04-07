@@ -27,6 +27,12 @@ class ResilientUnityClient {
         return this.withRetry(() => this.client.executeCode(code, timeout));
     }
     /**
+     * Execute a query in Unity with retry logic
+     */
+    async query(query, timeout) {
+        return this.withRetry(() => this.client.query(query, timeout));
+    }
+    /**
      * Check connection with retry logic
      */
     async checkConnection() {

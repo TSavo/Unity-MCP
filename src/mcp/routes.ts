@@ -1,6 +1,6 @@
 import express from 'express';
 import { executeTool, getResult, getManifest, setupSSE, getHelp, cancelOperation, listOperations, updateOperation } from './controllers/toolController';
-import { appendToLog, getLogsByName } from './controllers/logsController';
+import { appendToLog, getLogByName, getLogs, clearLog } from './controllers/logsController';
 
 const router = express.Router();
 
@@ -18,7 +18,9 @@ router.post('/cancel/:logId', cancelOperation);
 router.post('/update/:logId', updateOperation);
 
 // Logs endpoints
-router.post('/logs', appendToLog); // Create a new log or append to existing log
-router.get('/logs', getLogsByName); // Get logs by name (using query parameter)
+router.post('/logs/:logName', appendToLog); // Append to a log
+router.get('/logs/:logName', getLogByName); // Get a log by name
+router.get('/logs', getLogs); // Get all logs
+router.delete('/logs/:logName', clearLog); // Clear a log
 
 export default router;

@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
 import logger from '../../utils/logger';
-import { AsyncExecutionSystem } from '../../async/asyncExecutionSystem';
+import { LoggingSystem } from '../../logging/loggingSystem';
 
-// Get the async execution system
-const asyncExecutionSystem = AsyncExecutionSystem.getInstance();
+// Get the logging system
+const loggingSystem = LoggingSystem.getInstance();
 
 /**
  * Append data to a log
@@ -15,15 +15,8 @@ export const appendToLog = async (req: Request, res: Response): Promise<void> =>
   try {
     logger.info(`Appending to log: ${logName}`);
 
-    // Create a log entry
-    const logEntry = {
-      logName,
-      data,
-      timestamp: new Date().toISOString()
-    };
-
-    // Store the log entry
-    const logId = await asyncExecutionSystem.storeLogEntry(logName, logEntry);
+    // Append to the log
+    const logId = await loggingSystem.appendToLog(logName, data);
 
     res.json({
       status: 'success',
@@ -41,15 +34,41 @@ export const appendToLog = async (req: Request, res: Response): Promise<void> =>
 /**
  * Get logs by name
  */
-export const getLogsByName = async (req: Request, res: Response): Promise<void> => {
+export const getLogByName = async (req: Request, res: Response): Promise<void> => {
   const { logName } = req.params;
   const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
 
   try {
-    logger.info(`Getting logs for: ${logName}`);
+    logger.info(`Getting log for: ${logName}`);
 
-    // Get logs by name
-    const logs = await asyncExecutionSystem.getLogsByName(logName, limit);
+    // Get log by name
+    const entries = await loggingSystem.getLogByName(logName, limit);
+
+    res.json({
+      status: 'success',
+      name: logName,
+      entries
+    });
+  } catch (error) {
+    logger.error(`Error getting log: ${error instanceof Error ? error.message : String(error)}`);
+    res.status(500).json({
+      status: 'error',
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
+};
+
+/**
+ * Get all logs
+ */
+export const getLogs = async (req: Request, res: Response): Promise<void> => {
+  const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+
+  try {
+    logger.info('Getting all logs');
+
+    // Get all logs
+    const logs = await loggingSystem.getLogs(limit);
 
     res.json({
       status: 'success',
@@ -57,6 +76,31 @@ export const getLogsByName = async (req: Request, res: Response): Promise<void> 
     });
   } catch (error) {
     logger.error(`Error getting logs: ${error instanceof Error ? error.message : String(error)}`);
+    res.status(500).json({
+      status: 'error',
+      error: error instanceof Error ? error.message : String(error)
+    });
+  }
+};
+
+/**
+ * Clear a log
+ */
+export const clearLog = async (req: Request, res: Response): Promise<void> => {
+  const { logName } = req.params;
+
+  try {
+    logger.info(`Clearing log: ${logName}`);
+
+    // Clear the log
+    const success = await loggingSystem.clearLog(logName);
+
+    res.json({
+      status: 'success',
+      cleared: success
+    });
+  } catch (error) {
+    logger.error(`Error clearing log: ${error instanceof Error ? error.message : String(error)}`);
     res.status(500).json({
       status: 'error',
       error: error instanceof Error ? error.message : String(error)

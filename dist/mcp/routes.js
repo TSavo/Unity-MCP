@@ -18,6 +18,8 @@ router.post('/cancel/:logId', toolController_1.cancelOperation);
 // New endpoint for Unity to update operation results
 router.post('/update/:logId', toolController_1.updateOperation);
 // Logs endpoints
-router.post('/logs/:logName/append', logsController_1.appendToLog);
-router.get('/logs/:logName', logsController_1.getLogsByName);
+router.post('/logs/:logName', logsController_1.appendToLog); // Append to a log
+router.get('/logs/:logName', logsController_1.getLogByName); // Get a log by name
+router.get('/logs', logsController_1.getLogs); // Get all logs
+router.delete('/logs/:logName', logsController_1.clearLog); // Clear a log
 exports.default = router;

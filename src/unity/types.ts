@@ -9,13 +9,21 @@ export interface IUnityClient {
    * @returns A promise that resolves with the execution result
    */
   executeCode(code: string, timeout?: number): Promise<UnityExecutionResult>;
-  
+
+  /**
+   * Execute a query in Unity
+   * @param query The query to execute
+   * @param timeout Optional timeout in milliseconds
+   * @returns A promise that resolves with the query result
+   */
+  query(query: string, timeout?: number): Promise<UnityExecutionResult>;
+
   /**
    * Check if Unity is connected and responsive
    * @returns A promise that resolves with the connection status
    */
   checkConnection(): Promise<boolean>;
-  
+
   /**
    * Get Unity version and environment information
    * @returns A promise that resolves with Unity environment info

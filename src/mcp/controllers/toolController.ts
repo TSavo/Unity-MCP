@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { MCPTool, MCPToolRequest, MCPToolResponse } from '../types';
 import { AsyncExecutionSystem } from '../../async/asyncExecutionSystem';
+import { LoggingSystem } from '../../logging/loggingSystem';
 import { OperationExecutor, OperationStatus, OperationResult } from '../../async/types';
 import { StorageAdapterFactoryOptions } from '../../async/storage/StorageAdapterFactory';
 import { UnityClientFactory, UnityToolImplementation } from '../../unity';
@@ -15,6 +16,9 @@ const storageOptions: StorageAdapterFactoryOptions = {
 
 // Create an instance of the AsyncExecutionSystem with persistent storage
 const asyncExecutionSystem = new AsyncExecutionSystem(storageOptions);
+
+// Create a logging system
+const loggingSystem = LoggingSystem.getInstance();
 
 // Create a Unity client
 const unityClient = UnityClientFactory.createClient({
@@ -234,8 +238,7 @@ async function executeToolImplementation(
   tools: MCPTool[]
 ): Promise<any> {
   // Check if this is a Unity tool
-  if (tool.id.startsWith('unity_') &&
-      (tool.id === 'unity_execute_code' || tool.id === 'unity_query')) {
+  if (tool.id === 'execute_code' || tool.id === 'query') {
     try {
       // Forward to Unity tool implementation
       return await unityToolImplementation.executeUnityTool(
@@ -251,7 +254,7 @@ async function executeToolImplementation(
 
   // Handle other tools
   switch (tool.id) {
-    case 'unity_help':
+    case 'help':
       return {
         documentation: 'Unity-AI Bridge Help Documentation',
         tools: tools.map(t => ({
@@ -260,31 +263,38 @@ async function executeToolImplementation(
         }))
       };
 
-    case 'unity_get_logs':
-      // Get all logs from the AsyncExecutionSystem
-      const operations = await asyncExecutionSystem.listOperations();
+    case 'get_logs':
+      // Get all logs from the LoggingSystem
+      const logs = await loggingSystem.getLogs(parameters.limit || 10);
       return {
-        operations
+        logs
       };
 
-    case 'unity_get_logs_by_name':
-      // Get logs by name from the AsyncExecutionSystem
-      const logsByName = await asyncExecutionSystem.getLogsByName(parameters.log_name, parameters.limit || 10);
+    case 'get_log_by_name':
+      // Get a log by name from the LoggingSystem
+      const logEntries = await loggingSystem.getLogByName(parameters.log_name, parameters.limit || 10);
       return {
-        logs: logsByName
+        name: parameters.log_name,
+        entries: logEntries
       };
 
-    case 'unity_get_log_details':
+    case 'append_to_log':
+      // Append to a log
+      const logId = await loggingSystem.appendToLog(parameters.log_name, parameters.data);
       return {
-        id: parameters.log_id,
-        message: 'Detailed log message',
-        timestamp: new Date().toISOString(),
-        type: 'info',
-        stackTrace: 'Stack trace...',
-        context: { scene: 'Main' }
+        status: 'success',
+        logId
       };
 
-    case 'unity_get_result':
+    case 'clear_log':
+      // Clear a log
+      const success = await loggingSystem.clearLog(parameters.log_name);
+      return {
+        status: 'success',
+        cleared: success
+      };
+
+    case 'get_result':
       // Get the result from the AsyncExecutionSystem
       const result = await asyncExecutionSystem.getResult(parameters.log_id);
       return result;

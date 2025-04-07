@@ -97,7 +97,7 @@ class MCPServer {
     getDefaultTools() {
         return [
             {
-                id: 'unity_execute_code',
+                id: 'execute_code',
                 description: 'Execute C# code in Unity at runtime',
                 parameters: {
                     type: 'object',
@@ -116,7 +116,7 @@ class MCPServer {
                 }
             },
             {
-                id: 'unity_query',
+                id: 'query',
                 description: 'Execute a query using dot notation to access objects, properties, and methods',
                 parameters: {
                     type: 'object',
@@ -135,7 +135,7 @@ class MCPServer {
                 }
             },
             {
-                id: 'unity_get_result',
+                id: 'get_result',
                 description: 'Retrieve the result of a previously executed operation using its log ID',
                 parameters: {
                     type: 'object',
@@ -149,7 +149,7 @@ class MCPServer {
                 }
             },
             {
-                id: 'unity_get_logs',
+                id: 'get_logs',
                 description: 'Retrieve logs from Unity, including errors, messages, and custom logs',
                 parameters: {
                     type: 'object',
@@ -176,21 +176,58 @@ class MCPServer {
                 }
             },
             {
-                id: 'unity_get_log_details',
-                description: 'Retrieve detailed information about a specific log entry',
+                id: 'get_log_by_name',
+                description: 'Retrieve a log by name',
                 parameters: {
                     type: 'object',
                     properties: {
-                        log_id: {
+                        log_name: {
                             type: 'string',
-                            description: 'The ID of the log entry to retrieve details for'
+                            description: 'The name of the log to retrieve'
+                        },
+                        limit: {
+                            type: 'number',
+                            description: 'Maximum number of entries to return (default: 10)',
+                            default: 10
                         }
                     },
-                    required: ['log_id']
+                    required: ['log_name']
                 }
             },
             {
-                id: 'unity_help',
+                id: 'append_to_log',
+                description: 'Append data to a log',
+                parameters: {
+                    type: 'object',
+                    properties: {
+                        log_name: {
+                            type: 'string',
+                            description: 'The name of the log to append to'
+                        },
+                        data: {
+                            type: 'object',
+                            description: 'The data to append to the log'
+                        }
+                    },
+                    required: ['log_name', 'data']
+                }
+            },
+            {
+                id: 'clear_log',
+                description: 'Clear a log',
+                parameters: {
+                    type: 'object',
+                    properties: {
+                        log_name: {
+                            type: 'string',
+                            description: 'The name of the log to clear'
+                        }
+                    },
+                    required: ['log_name']
+                }
+            },
+            {
+                id: 'help',
                 description: 'Get documentation on the available commands and query syntax',
                 parameters: {
                     type: 'object',

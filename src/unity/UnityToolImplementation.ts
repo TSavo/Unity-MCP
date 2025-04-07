@@ -37,10 +37,10 @@ export class UnityToolImplementation {
     }
 
     switch (toolId) {
-      case 'unity_execute_code':
+      case 'execute_code':
         return this.executeCode(parameters.code, parameters.timeout, reportProgress);
 
-      case 'unity_query':
+      case 'query':
         return this.executeQuery(parameters.query, parameters.timeout, reportProgress);
 
       default:
