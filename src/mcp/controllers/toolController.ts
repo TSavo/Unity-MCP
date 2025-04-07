@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { MCPTool, MCPToolRequest, MCPToolResponse } from '../types';
 import { AsyncExecutionSystem } from '../../async/asyncExecutionSystem';
-import { OperationExecutor, OperationStatus } from '../../async/types';
+import { OperationExecutor, OperationStatus, OperationResult } from '../../async/types';
 import { StorageAdapterFactoryOptions } from '../../async/storage/StorageAdapterFactory';
 import path from 'path';
 import logger from '../../utils/logger';
@@ -332,5 +332,74 @@ export const listOperations = async (req: Request, res: Response): Promise<void>
       error: error instanceof Error ? error.message : String(error)
     };
     res.status(500).json(errorResponse);
+  }
+}
+
+/**
+ * Update an operation result
+ * This endpoint is used by Unity to update the result of a long-running operation
+ */
+export const updateOperation = async (req: Request, res: Response): Promise<void> => {
+  const logId = req.params.logId;
+  const update = req.body;
+
+  try {
+    // Get the current result
+    const currentResult = await asyncExecutionSystem.getResult(logId);
+
+    if (currentResult.status === OperationStatus.ERROR && currentResult.error?.includes('not found')) {
+      const errorResponse: MCPToolResponse = {
+        status: 'error',
+        error: `Result not found for log ID: ${logId}`
+      };
+      res.status(404).json(errorResponse);
+      return;
+    }
+
+    // Create an updated result
+    const updatedResult: OperationResult = {
+      ...currentResult,
+      ...update,
+      logId, // Ensure the log ID is preserved
+      // If the update includes a status, convert it from string to OperationStatus
+      status: update.status ? stringToOperationStatus(update.status) : currentResult.status
+    };
+
+    // Store the updated result
+    await asyncExecutionSystem.storage.storeResult(updatedResult);
+
+    // Return success
+    res.json({
+      status: 'success',
+      message: `Operation ${logId} updated successfully`,
+      log_id: logId
+    });
+  } catch (error) {
+    logger.error(`Error updating operation: ${error instanceof Error ? error.message : String(error)}`);
+    const errorResponse: MCPToolResponse = {
+      status: 'error',
+      error: error instanceof Error ? error.message : String(error)
+    };
+    res.status(500).json(errorResponse);
+  }
+}
+
+/**
+ * Convert a string status to OperationStatus
+ */
+function stringToOperationStatus(status: string): OperationStatus {
+  switch (status.toLowerCase()) {
+    case 'success':
+      return OperationStatus.SUCCESS;
+    case 'error':
+      return OperationStatus.ERROR;
+    case 'timeout':
+      return OperationStatus.TIMEOUT;
+    case 'cancelled':
+      return OperationStatus.CANCELLED;
+    case 'running':
+      return OperationStatus.RUNNING;
+    default:
+      return OperationStatus.UNKNOWN;
   }
 }

@@ -12,7 +12,7 @@ import logger from '../utils/logger';
  */
 export class AsyncExecutionSystem {
   private readonly registry: OperationRegistry;
-  private readonly storage: StorageAdapter;
+  public readonly storage: StorageAdapter;
   private readonly defaultOptions: Partial<OperationOptions> = {
     timeoutMs: 30000 // Default timeout: 30 seconds
   };

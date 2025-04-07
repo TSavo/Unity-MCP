@@ -6,7 +6,8 @@ export enum OperationStatus {
   ERROR = 'error',
   TIMEOUT = 'timeout',
   CANCELLED = 'cancelled',
-  RUNNING = 'running'
+  RUNNING = 'running',
+  UNKNOWN = 'unknown'
 }
 
 /**
