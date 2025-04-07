@@ -56,7 +56,7 @@ export interface MCPToolRequest {
  * MCP Tool Response
  */
 export interface MCPToolResponse {
-  status: 'success' | 'error' | 'timeout';
+  status: 'success' | 'error' | 'timeout' | 'cancelled' | 'running' | 'unknown';
   result?: any;
   error?: string;
   log_id?: string;
