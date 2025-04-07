@@ -4,7 +4,8 @@ import fs from 'fs';
 import path from 'path';
 
 describe('NeDBStorageAdapter', () => {
-  const testDbPath = path.join(__dirname, 'test-db');
+  // Use a unique test DB path for each test run to avoid file permission issues
+  const testDbPath = path.join(__dirname, `test-db-${Date.now()}-${Math.floor(Math.random() * 10000)}`);
   let adapter: NeDBStorageAdapter;
 
   beforeEach(async () => {
@@ -17,26 +18,33 @@ describe('NeDBStorageAdapter', () => {
     // Close the adapter and clean up the test database
     await adapter.close();
 
+    // Give the file system a moment to release file handles
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     try {
-      // Remove the test database files
-      if (fs.existsSync(`${testDbPath}/results.db`)) {
-        fs.unlinkSync(`${testDbPath}/results.db`);
-      }
-      if (fs.existsSync(`${testDbPath}/operations.db`)) {
-        fs.unlinkSync(`${testDbPath}/operations.db`);
-      }
-
-      // Remove any temporary files
-      const files = fs.readdirSync(testDbPath);
-      for (const file of files) {
-        fs.unlinkSync(path.join(testDbPath, file));
-      }
-
-      // Remove the directory
+      // Remove the test database files if they exist
       if (fs.existsSync(testDbPath)) {
-        fs.rmdirSync(testDbPath);
+        // Get all files in the directory
+        const files = fs.readdirSync(testDbPath);
+
+        // Try to delete each file
+        for (const file of files) {
+          try {
+            fs.unlinkSync(path.join(testDbPath, file));
+          } catch (e) {
+            // Ignore errors when deleting individual files
+          }
+        }
+
+        // Try to remove the directory
+        try {
+          fs.rmdirSync(testDbPath);
+        } catch (e) {
+          // Ignore errors when removing the directory
+        }
       }
     } catch (error) {
+      // Just log the error but don't fail the test
       console.warn(`Error cleaning up test database: ${error instanceof Error ? error.message : String(error)}`);
     }
   });
@@ -321,7 +329,10 @@ describe('NeDBStorageAdapter', () => {
       // Close the adapter
       await adapter.close();
 
-      // Create a new adapter instance
+      // Give the file system a moment to release file handles
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Create a new adapter instance with the same path
       const newAdapter = new NeDBStorageAdapter(testDbPath);
       await newAdapter.initialize();
 
@@ -338,6 +349,9 @@ describe('NeDBStorageAdapter', () => {
       } finally {
         // Close the new adapter
         await newAdapter.close();
+
+        // Give the file system a moment to release file handles
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
     });
   });
