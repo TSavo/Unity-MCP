@@ -244,6 +244,10 @@ async function executeToolImplementation(tool, parameters, reportProgress, tools
                 stackTrace: 'Stack trace...',
                 context: { scene: 'Main' }
             };
+        case 'unity_get_result':
+            // Get the result from the AsyncExecutionSystem
+            const result = await asyncExecutionSystem.getResult(parameters.log_id);
+            return result;
         default:
             logger_1.default.warn(`Unsupported tool: ${tool.id}`);
             throw new Error(`Unsupported tool: ${tool.id}`);

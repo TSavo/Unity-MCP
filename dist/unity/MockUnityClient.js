@@ -140,8 +140,8 @@ class MockUnityClient {
             if (/^[0-9+\-*/. ()]+$/.test(code)) {
                 return eval(code);
             }
-            // For other code, return a mock object
-            return { mockResult: true, code };
+            // For other code, return a mock object with a custom message
+            return { mockResult: true, code, message: "This is a custom mock response added during hot reloading test!" };
         }
         catch (error) {
             throw new Error(`Cannot evaluate code: ${error instanceof Error ? error.message : String(error)}`);

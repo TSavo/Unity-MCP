@@ -278,6 +278,11 @@ async function executeToolImplementation(
         context: { scene: 'Main' }
       };
 
+    case 'unity_get_result':
+      // Get the result from the AsyncExecutionSystem
+      const result = await asyncExecutionSystem.getResult(parameters.log_id);
+      return result;
+
     default:
       logger.warn(`Unsupported tool: ${tool.id}`);
       throw new Error(`Unsupported tool: ${tool.id}`);

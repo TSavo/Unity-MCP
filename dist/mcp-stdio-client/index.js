@@ -233,7 +233,12 @@ async function createMcpStdioClient(webServerUrl = process.env.WEB_SERVER_URL ||
         try {
             logger.info(`Getting result for log ID: ${logId}`);
             // Forward to Web Server
-            const response = await axios_1.default.get(`${webServerUrl}/api/results/${logId}`);
+            const response = await axios_1.default.post(`${webServerUrl}/tools`, {
+                tool_id: "unity_get_result",
+                parameters: {
+                    log_id: logId
+                }
+            });
             const result = response.data;
             logger.debug(`Received result: ${JSON.stringify(result).substring(0, 200)}${JSON.stringify(result).length > 200 ? '...' : ''}`);
             // Return result to Claude
@@ -301,7 +306,12 @@ async function createMcpStdioClient(webServerUrl = process.env.WEB_SERVER_URL ||
         try {
             logger.info(`Getting log details for log ID: ${logId}`);
             // Forward to Web Server
-            const response = await axios_1.default.get(`${webServerUrl}/results/${logId}`);
+            const response = await axios_1.default.post(`${webServerUrl}/tools`, {
+                tool_id: "unity_get_log_details",
+                parameters: {
+                    log_id: logId
+                }
+            });
             const result = response.data;
             logger.debug(`Received log details: ${JSON.stringify(result).substring(0, 200)}${JSON.stringify(result).length > 200 ? '...' : ''}`);
             // Return result to Claude

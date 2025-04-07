@@ -24,6 +24,7 @@ Unity-MCP is an open-source implementation of the Model Context Protocol for Uni
 ## Documentation
 
 - [MCP Server Documentation](docs/mcp-server.md): Detailed information about the MCP server architecture and features
+- [MCP Server Tools](docs/mcp-server-tools.md): Detailed information about the tools available in the MCP server
 - [API Reference](docs/api-reference.md): Detailed information about the API endpoints
 - [Installation Guide](docs/installation.md): Step-by-step instructions for installing and setting up the MCP server
 - [Development Guide](docs/development.md): Information about the development environment and workflow
