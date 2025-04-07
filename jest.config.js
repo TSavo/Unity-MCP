@@ -13,4 +13,8 @@ module.exports = {
   setupFilesAfterEnv: ['<rootDir>/e2e/setup.ts'],
   // Longer timeout for e2e tests
   testTimeout: 30000,
+  // Transform ESM modules
+  transformIgnorePatterns: [
+    'node_modules/(?!(p-timeout|p-cancelable)/)',
+  ],
 };

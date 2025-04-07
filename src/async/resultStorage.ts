@@ -2,7 +2,7 @@ import { OperationResult, OperationInfo, OperationStatus } from './types';
 
 /**
  * ResultStorage class
- * 
+ *
  * Stores and retrieves operation results.
  */
 export class ResultStorage {
@@ -11,17 +11,40 @@ export class ResultStorage {
 
   /**
    * Store a result
-   * 
+   *
    * @param logId Log ID
    * @param result Operation result
    */
-  public storeResult(logId: string, result: OperationResult): void {
-    this.results.set(logId, result);
+  public storeResult(logId: string, result: OperationResult): void;
+
+  /**
+   * Store a result
+   *
+   * @param result Operation result with log_id
+   */
+  public storeResult(result: OperationResult): void;
+
+  /**
+   * Store a result
+   *
+   * @param logIdOrResult Log ID or operation result
+   * @param result Operation result (optional)
+   */
+  public storeResult(logIdOrResult: string | OperationResult, result?: OperationResult): void {
+    if (typeof logIdOrResult === 'string' && result) {
+      // First overload: logId and result
+      this.results.set(logIdOrResult, result);
+    } else if (typeof logIdOrResult === 'object' && logIdOrResult.log_id) {
+      // Second overload: result with log_id
+      this.results.set(logIdOrResult.log_id, logIdOrResult);
+    } else {
+      throw new Error('Invalid arguments to storeResult');
+    }
   }
 
   /**
    * Get a result
-   * 
+   *
    * @param logId Log ID
    * @returns Operation result or null if not found
    */
@@ -31,7 +54,7 @@ export class ResultStorage {
 
   /**
    * Register a running operation
-   * 
+   *
    * @param logId Log ID
    * @param cancelFn Function to cancel the operation
    */
@@ -41,7 +64,7 @@ export class ResultStorage {
 
   /**
    * Unregister a running operation
-   * 
+   *
    * @param logId Log ID
    */
   public unregisterRunningOperation(logId: string): void {
@@ -50,7 +73,7 @@ export class ResultStorage {
 
   /**
    * Cancel an operation
-   * 
+   *
    * @param logId Log ID
    * @returns true if the operation was cancelled, false otherwise
    */
@@ -59,7 +82,7 @@ export class ResultStorage {
     if (operation) {
       operation.cancel();
       this.unregisterRunningOperation(logId);
-      
+
       // Update the result to indicate cancellation
       const result = this.getResult(logId);
       if (result) {
@@ -69,7 +92,7 @@ export class ResultStorage {
         result.message = 'Operation cancelled by user';
         this.storeResult(logId, result);
       }
-      
+
       return true;
     }
     return false;
@@ -77,7 +100,7 @@ export class ResultStorage {
 
   /**
    * List all operations
-   * 
+   *
    * @returns Array of operation info
    */
   public listOperations(): OperationInfo[] {

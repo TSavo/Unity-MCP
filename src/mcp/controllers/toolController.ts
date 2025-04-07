@@ -1,12 +1,22 @@
 import { Request, Response } from 'express';
 import { MCPTool, MCPToolRequest, MCPToolResponse } from '../types';
 import { AsyncExecutionSystem } from '../../async/asyncExecutionSystem';
-import { AsyncOperation } from '../../async/asyncOperation';
-import { OperationStatus } from '../../async/types';
+import { OperationExecutor, OperationStatus } from '../../async/types';
 import logger from '../../utils/logger';
 
 // Create an instance of the AsyncExecutionSystem
 const asyncExecutionSystem = new AsyncExecutionSystem();
+
+// Clean up resources when the process exits
+process.on('exit', () => {
+  asyncExecutionSystem.dispose();
+});
+
+// Handle SIGINT (Ctrl+C)
+process.on('SIGINT', () => {
+  asyncExecutionSystem.dispose();
+  process.exit(0);
+});
 
 /**
  * Execute a tool and return the response
@@ -30,28 +40,28 @@ export const executeTool = async (req: Request, res: Response): Promise<void> =>
   const timeout = toolRequest.parameters?.timeout || 1000;
 
   try {
-    // Create an async operation for the tool execution
-    const operation = new AsyncOperation(async (resolve, reject, reportProgress) => {
-      try {
-        // Execute the tool implementation
-        const result = await executeToolImplementation(tool, toolRequest.parameters, reportProgress, tools);
-        resolve(result);
-      } catch (error) {
-        reject(error instanceof Error ? error : new Error(String(error)));
+    // Create an operation executor function
+    const executor: OperationExecutor<any> = async ({ onProgress, signal }) => {
+      // Check if the operation was cancelled
+      if (signal.aborted) {
+        throw new Error('Operation was cancelled');
       }
-    });
+
+      // Execute the tool implementation
+      return executeToolImplementation(tool, toolRequest.parameters, onProgress, tools);
+    };
 
     // Execute the operation with the specified timeout
-    const operationResult = await asyncExecutionSystem.executeOperation(operation, timeout);
+    const operationResult = await asyncExecutionSystem.executeOperation(executor, { timeoutMs: timeout });
 
     // Convert the operation result to an MCP tool response
     const response: MCPToolResponse = {
       status: operationResultStatusToMCPStatus(operationResult.status),
-      log_id: operationResult.log_id,
+      log_id: operationResult.logId,
       result: operationResult.result,
-      partial_result: operationResult.partial_result,
+      partial_result: operationResult.partialResult,
       error: operationResult.error,
-      is_complete: operationResult.is_complete,
+      is_complete: operationResult.isComplete,
       message: operationResult.message
     };
 
@@ -88,11 +98,11 @@ export const getResult = async (req: Request, res: Response): Promise<void> => {
     // Convert the operation result to an MCP tool response
     const response: MCPToolResponse = {
       status: operationResultStatusToMCPStatus(operationResult.status),
-      log_id: operationResult.log_id,
+      log_id: operationResult.logId,
       result: operationResult.result,
-      partial_result: operationResult.partial_result,
+      partial_result: operationResult.partialResult,
       error: operationResult.error,
-      is_complete: operationResult.is_complete,
+      is_complete: operationResult.isComplete,
       message: operationResult.message
     };
 
@@ -130,6 +140,11 @@ export const setupSSE = (req: Request, res: Response): void => {
     res.write('event: heartbeat\ndata: {}\n\n');
   }, 30000) : null;
 
+  // Ensure the timer is unref'd so it doesn't keep the process alive
+  if (heartbeat && heartbeat.unref) {
+    heartbeat.unref();
+  }
+
   // Clean up on close
   req.on('close', () => {
     if (heartbeat) clearInterval(heartbeat);
@@ -151,27 +166,31 @@ export const getHelp = async (req: Request, res: Response): Promise<void> => {
   const tools = req.app.locals.mcpManifest.tools;
 
   try {
-    // Create an async operation for the help documentation
-    const operation = new AsyncOperation(async (resolve) => {
-      const helpResult = {
+    // Create an operation executor function for the help documentation
+    const executor: OperationExecutor<any> = async ({ onProgress, signal }) => {
+      // Check if the operation was cancelled
+      if (signal.aborted) {
+        throw new Error('Operation was cancelled');
+      }
+
+      return {
         documentation: 'Unity-AI Bridge Help Documentation',
         tools: tools.map((t: MCPTool) => ({
           id: t.id,
           description: t.description
         }))
       };
-      resolve(helpResult);
-    });
+    };
 
     // Execute the operation with a short timeout (help should be fast)
-    const operationResult = await asyncExecutionSystem.executeOperation(operation, 100);
+    const operationResult = await asyncExecutionSystem.executeOperation(executor, { timeoutMs: 100 });
 
     // Convert the operation result to an MCP tool response
     const response: MCPToolResponse = {
       status: operationResultStatusToMCPStatus(operationResult.status),
-      log_id: operationResult.log_id,
+      log_id: operationResult.logId,
       result: operationResult.result,
-      is_complete: operationResult.is_complete,
+      is_complete: operationResult.isComplete,
       message: 'Help documentation retrieved successfully.'
     };
 
@@ -270,7 +289,7 @@ export const cancelOperation = async (req: Request, res: Response): Promise<void
     // Convert the operation result to an MCP tool response
     const response: MCPToolResponse = {
       status: operationResultStatusToMCPStatus(result.status),
-      log_id: result.log_id,
+      log_id: result.logId,
       message: result.message,
       error: result.error
     };

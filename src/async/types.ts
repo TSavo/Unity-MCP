@@ -14,26 +14,26 @@ export enum OperationStatus {
  */
 export interface OperationResult<T = any> {
   status: OperationStatus;
-  log_id: string;
+  logId: string;
   result?: T;
-  partial_result?: any;
+  partialResult?: any;
   error?: string;
-  is_complete: boolean;
+  isComplete: boolean;
   message?: string;
-  start_time?: number;
-  end_time?: number;
+  startTime?: number;
+  endTime?: number;
 }
 
 /**
  * Operation info interface for listing operations
  */
 export interface OperationInfo {
-  log_id: string;
+  logId: string;
   status: OperationStatus;
-  is_complete: boolean;
-  start_time: number;
-  end_time?: number;
-  operation_type?: string;
+  isComplete: boolean;
+  startTime: number;
+  endTime?: number;
+  operationType?: string;
 }
 
 /**
@@ -42,8 +42,20 @@ export interface OperationInfo {
 export type ProgressCallback = (progress: any) => void;
 
 /**
- * Operation function type
+ * Operation options interface
  */
-export type OperationFunction<T = any> = (
-  reportProgress: ProgressCallback
+export interface OperationOptions {
+  timeoutMs: number;
+  onProgress?: ProgressCallback;
+  context?: any;
+}
+
+/**
+ * Operation executor function type
+ */
+export type OperationExecutor<T> = (
+  options: {
+    onProgress: ProgressCallback;
+    signal: AbortSignal;
+  }
 ) => Promise<T>;

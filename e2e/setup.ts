@@ -52,4 +52,12 @@ afterAll(async () => {
       });
     });
   }
+
+  // Force garbage collection to clean up any remaining resources
+  if (global.gc) {
+    global.gc();
+  }
+
+  // Add a small delay to allow any remaining resources to be cleaned up
+  await new Promise(resolve => setTimeout(resolve, 100));
 });
