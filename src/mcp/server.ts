@@ -5,6 +5,7 @@ import { MCPServerManifest, MCPTool } from './types';
 import routes from './routes';
 import { MCPDiscovery, MCPServerInfo } from './discovery';
 import { jsonErrorHandler, validateRequest, errorHandler, rateLimiter } from './middleware/error-handler';
+import logger from '../utils/logger';
 
 /**
  * MCP Server Configuration
@@ -73,7 +74,7 @@ export class MCPServer {
    */
   public start(): void {
     this.app.listen(this.port, () => {
-      console.log(`MCP Server running on port ${this.port}`);
+      logger.info(`MCP Server running on port ${this.port}`);
     });
   }
 
@@ -84,7 +85,7 @@ export class MCPServer {
     // Stop advertising the server
     this.discovery.stopAdvertising(this.serverUrl);
 
-    console.log(`MCP Server stopped`);
+    logger.info(`MCP Server stopped`);
   }
 
   /**

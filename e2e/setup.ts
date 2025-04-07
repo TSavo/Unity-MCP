@@ -2,6 +2,7 @@ import { MCPServer } from '../src/mcp/server';
 import { AddressInfo } from 'net';
 import http from 'http';
 import { Server } from 'http';
+import logger from '../src/utils/logger';
 
 // Global variables for e2e tests
 declare global {
@@ -30,7 +31,7 @@ beforeAll(async () => {
       const address = global.httpServer.address() as AddressInfo;
       global.serverPort = address.port;
       global.serverUrl = `http://localhost:${global.serverPort}`;
-      console.log(`Test server running at ${global.serverUrl}`);
+      logger.info(`Test server running at ${global.serverUrl}`);
       resolve();
     });
   });
