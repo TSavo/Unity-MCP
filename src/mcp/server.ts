@@ -3,6 +3,8 @@ import cors from 'cors';
 import bodyParser from 'body-parser';
 import { MCPServerManifest, MCPTool } from './types';
 import routes from './routes';
+import { MCPDiscovery, MCPServerInfo } from './discovery';
+import { jsonErrorHandler, validateRequest, errorHandler, rateLimiter } from './middleware/error-handler';
 
 /**
  * MCP Server Configuration
@@ -11,6 +13,7 @@ export interface MCPServerConfig {
   name: string;
   description: string;
   port: number;
+  advertise?: boolean; // Whether to advertise the server on the network
 }
 
 /**
@@ -20,14 +23,23 @@ export class MCPServer {
   private app: Express;
   private port: number;
   private manifest: MCPServerManifest;
+  private discovery: MCPDiscovery;
+  private serverUrl: string;
 
   constructor(config: MCPServerConfig) {
     this.app = express();
     this.port = config.port;
+    this.serverUrl = `http://localhost:${this.port}`;
+    this.discovery = new MCPDiscovery();
 
     // Configure Express
     this.app.use(cors());
-    this.app.use(bodyParser.json());
+    this.app.use(bodyParser.json({ limit: '1mb' }));
+
+    // Add error handling middleware
+    this.app.use(jsonErrorHandler);
+    this.app.use(validateRequest);
+    this.app.use(rateLimiter);
 
     // Initialize manifest
     this.manifest = {
@@ -42,6 +54,11 @@ export class MCPServer {
 
     // Set up routes
     this.setupRoutes();
+
+    // Advertise the server if requested
+    if (config.advertise) {
+      this.advertiseServer();
+    }
   }
 
   /**
@@ -61,11 +78,38 @@ export class MCPServer {
   }
 
   /**
+   * Stop the server
+   */
+  public stop(): void {
+    // Stop advertising the server
+    this.discovery.stopAdvertising(this.serverUrl);
+
+    console.log(`MCP Server stopped`);
+  }
+
+  /**
+   * Advertise the server on the network
+   */
+  private advertiseServer(): void {
+    const serverInfo: MCPServerInfo = {
+      url: this.serverUrl,
+      name: this.manifest.name,
+      description: this.manifest.description,
+      tools: this.manifest.tools.map(tool => tool.id)
+    };
+
+    this.discovery.advertiseServer(serverInfo);
+  }
+
+  /**
    * Set up server routes
    */
   private setupRoutes(): void {
     // Use the routes
     this.app.use(routes);
+
+    // Add error handler middleware (should be after all routes)
+    this.app.use(errorHandler);
   }
 
   /**
