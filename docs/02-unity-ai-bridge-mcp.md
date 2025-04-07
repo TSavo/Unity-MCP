@@ -266,140 +266,99 @@ Configure the package via command-line arguments:
 npx unity-ai-bridge start --port 8080 --unity-host localhost --unity-port 8081
 ```
 
-## 5. Query Language Specification
+## 5. Direct Code Execution and Query Conventions
 
-### 5.1 Query Language Syntax
+### 5.1 Direct C# Code Execution
 
-The query language uses a simple dot notation with the following syntax elements:
+The Unity-AI Bridge allows AI assistants to execute arbitrary C# code directly in Unity. This is sent as a string and executed as-is in the Unity environment:
 
-#### 5.1.1 Root Objects
-```
-Scene           // Access to scene objects
-Static          // Access to static methods
-Game            // Access to game-specific objects
+```csharp
+// This code is sent directly to Unity and executed
+GameObject.Find("Player").transform.position.x = 10;
 ```
 
-#### 5.1.2 Property Access
-```
-Object.Property                 // Access a property
-Scene["Player"].transform.position  // Access a nested property
+There is no translation or parsing layer - the code is executed directly in Unity's C# environment.
+
+### 5.2 Query Conventions
+
+While any valid C# code can be executed, the following conventions are recommended for accessing Unity objects:
+
+#### 5.2.1 Finding GameObjects
+```csharp
+// Find a GameObject by name
+GameObject.Find("Player")
+
+// Find a GameObject by tag
+GameObject.FindWithTag("Player")
+
+// Find all GameObjects with a tag
+GameObject.FindGameObjectsWithTag("Enemy")
+
+// Access a child GameObject
+GameObject.Find("Player").transform.Find("Weapon")
 ```
 
-#### 5.1.3 Method Calls
-```
-Object.Method()                 // Call a method with no parameters
-Object.Method(arg1, arg2)       // Call a method with parameters
-Object.Method<Type>()           // Call a generic method
+#### 5.2.2 Accessing Components
+```csharp
+// Get a component
+GameObject.Find("Player").GetComponent<Rigidbody>()
+
+// Get a specific component property
+GameObject.Find("Player").GetComponent<Rigidbody>().mass
+
+// Set a component property
+GameObject.Find("Player").GetComponent<Rigidbody>().mass = 10
+
+// Call a component method
+GameObject.Find("Player").GetComponent<Rigidbody>().AddForce(new Vector3(0, 10, 0))
 ```
 
-#### 5.1.4 Indexers
-```
-Object[0]                       // Access by numeric index
-Object["name"]                  // Access by string key
-Scene["Player"]                 // Find a GameObject by name
-```
+#### 5.2.3 Game-Specific Code
+```csharp
+// Find a game-specific object (if your game has a static access point)
+TrolleyGame.TrolleySetup.Instance
 
-#### 5.1.5 Value Assignment
-```
-Object.Property = value         // Assign a value to a property
-```
+// Access game-specific properties
+TrolleyGame.TrolleySetup.Instance.tournament.GetCurrentMatch()
 
-#### 5.1.6 Type Creation
-```
-new Vector3(1, 2, 3)            // Create a new object
+// Modify game state
+TrolleyGame.TrolleySetup.Instance.MakeChoice(true)
 ```
 
-### 5.2 Type Handling
+### 5.3 Type Handling
 
-The query language handles Unity types as follows:
+When Unity returns results to the AI assistant, types are converted as follows:
 
-#### 5.2.1 Basic Types
-- **Numeric types** (int, float, etc.): Passed and returned as JSON numbers
-- **Strings**: Passed and returned as JSON strings
-- **Booleans**: Passed and returned as JSON booleans
-- **Null**: Passed and returned as JSON null
+#### 5.3.1 Basic Types
+- **Numeric types** (int, float, etc.): Converted to JSON numbers
+- **Strings**: Converted to JSON strings
+- **Booleans**: Converted to JSON booleans
+- **Null**: Converted to JSON null
 
-#### 5.2.2 Unity Types
-- **Vector2/3/4**: Converted to/from JSON objects with x, y, z, w properties
-- **Quaternion**: Converted to/from JSON objects with x, y, z, w properties
-- **Color**: Converted to/from JSON objects with r, g, b, a properties
+#### 5.3.2 Unity Types
+- **Vector2/3/4**: Converted to JSON objects with x, y, z, w properties
+- **Quaternion**: Converted to JSON objects with x, y, z, w properties
+- **Color**: Converted to JSON objects with r, g, b, a properties
 - **GameObject/Component**: Converted to JSON objects with key properties and references
 
-#### 5.2.3 Collections
+#### 5.3.3 Collections
 - **Arrays**: Converted to JSON arrays
 - **Lists**: Converted to JSON arrays
 - **Dictionaries**: Converted to JSON objects
 
-### 5.3 Query Examples
+### 5.4 Error Handling
 
-#### 5.3.1 Finding and Accessing GameObjects
-```
-// Find a GameObject by name
-Scene["Player"]
+Code execution can fail for various reasons:
 
-// Find a GameObject by tag
-Static.GameObject.FindWithTag("Player")
-
-// Find all GameObjects with a tag
-Static.GameObject.FindGameObjectsWithTag("Enemy")
-
-// Access a child GameObject
-Scene["Player"].transform.Find("Weapon")
-```
-
-#### 5.3.2 Accessing Components
-```
-// Get a component
-Scene["Player"].GetComponent<Rigidbody>()
-
-// Get a specific component property
-Scene["Player"].GetComponent<Rigidbody>().mass
-
-// Set a component property
-Scene["Player"].GetComponent<Rigidbody>().mass = 10
-
-// Call a component method
-Scene["Player"].GetComponent<Rigidbody>().AddForce(new Vector3(0, 10, 0))
-```
-
-#### 5.3.3 Game-Specific Queries
-```
-// Find a game-specific object
-Game["TrolleySetup"]
-
-// Access game-specific properties
-Game["TrolleySetup"].tournament.GetCurrentMatch()
-
-// Modify game state
-Game["TrolleySetup"].MakeChoice(true)
-```
-
-### 5.4 Query Limitations
-
-The query language has the following limitations:
-
-1. **Cannot Define New Types**: You cannot define new classes or structs
-2. **Limited Control Flow**: No loops or conditionals within a single query
-3. **No Exception Handling**: Cannot use try/catch within a query
-4. **No Variable Declarations**: Cannot declare local variables
-5. **No Closures or Lambdas**: Cannot define anonymous functions
-
-For more complex operations requiring these features, use the `unity_execute_code` command instead.
-
-### 5.5 Error Handling
-
-Queries can fail at different points:
-
-1. **Parse Errors**: Invalid syntax in the query string
-2. **Resolution Errors**: Cannot find an object or property
-3. **Type Errors**: Type mismatch in method calls or assignments
-4. **Execution Errors**: Exceptions thrown during execution
+1. **Compilation Errors**: Invalid C# syntax
+2. **Runtime Errors**: Exceptions thrown during execution
+3. **Resolution Errors**: Cannot find an object or property
+4. **Type Errors**: Type mismatch in method calls or assignments
 
 All errors are returned with:
 - Error type
 - Error message
-- Location in the query where the error occurred
-- Stack trace (for execution errors)
+- Stack trace (for runtime errors)
 
 ## 6. MCP Integration
 
@@ -462,17 +421,17 @@ The Unity-AI Bridge exposes exactly six tools through MCP:
 ```json
 {
   "id": "unity_execute_code",
-  "description": "Execute C# code in Unity at runtime",
+  "description": "Execute C# code directly in Unity at runtime",
   "parameters": {
     "type": "object",
     "properties": {
       "code": {
         "type": "string",
-        "description": "C# code to execute"
+        "description": "C# code to execute - this is sent directly to Unity and executed as-is"
       },
       "timeout": {
         "type": "number",
-        "description": "Maximum time to wait in milliseconds before returning (default: 1000)",
+        "description": "Maximum time to wait in milliseconds before returning (default: 1000). If the operation takes longer, it continues in the background and a log_id is returned.",
         "default": 1000
       }
     },
@@ -481,31 +440,7 @@ The Unity-AI Bridge exposes exactly six tools through MCP:
 }
 ```
 
-#### 6.2.2 Execute Query
-
-```json
-{
-  "id": "unity_query",
-  "description": "Execute a query using dot notation to access objects, properties, and methods",
-  "parameters": {
-    "type": "object",
-    "properties": {
-      "query": {
-        "type": "string",
-        "description": "Query string using dot notation (e.g., Scene['Player'].transform.position)"
-      },
-      "timeout": {
-        "type": "number",
-        "description": "Maximum time to wait in milliseconds before returning (default: 1000)",
-        "default": 1000
-      }
-    },
-    "required": ["query"]
-  }
-}
-```
-
-#### 6.2.3 Get Result
+#### 6.2.2 Get Result
 
 ```json
 {
@@ -524,7 +459,7 @@ The Unity-AI Bridge exposes exactly six tools through MCP:
 }
 ```
 
-#### 6.2.4 Get Logs
+#### 6.2.3 Get Logs
 
 ```json
 {
@@ -556,7 +491,7 @@ The Unity-AI Bridge exposes exactly six tools through MCP:
 }
 ```
 
-#### 6.2.5 Get Log Details
+#### 6.2.4 Get Log Details
 
 ```json
 {
@@ -575,7 +510,7 @@ The Unity-AI Bridge exposes exactly six tools through MCP:
 }
 ```
 
-#### 6.2.6 Get Help
+#### 6.2.5 Get Help
 
 ```json
 {
@@ -592,36 +527,55 @@ The Unity-AI Bridge exposes exactly six tools through MCP:
 
 ### 7.1 Runtime Code Executor
 
-The Runtime Code Executor compiles and executes C# code in the Unity runtime:
+The Runtime Code Executor compiles and executes C# code directly in the Unity runtime:
 
 ```csharp
 public class RuntimeCodeExecutor
 {
     public object ExecuteCode(string code)
     {
-        // Prepare the code
+        // Prepare the code for execution
         string fullCode = PrepareCode(code);
 
-        // Compile the code
+        // Compile the code directly in Unity
         Assembly assembly = CompileCode(fullCode);
 
-        // Execute the code
+        // Execute the code in Unity's context
         return InvokeExecuteMethod(assembly);
     }
 
     private string PrepareCode(string code)
     {
         // Wrap the code in a class with an Execute method
+        // This allows the code to be compiled and executed
+        return $@"
+            using UnityEngine;
+            using System;
+            using System.Collections;
+            using System.Collections.Generic;
+            using System.Linq;
+
+            public class DynamicExecutor
+            {{
+                public object Execute()
+                {{
+                    {code}
+                }}
+            }}
+        ";
     }
 
     private Assembly CompileCode(string code)
     {
-        // Compile the code into an assembly
+        // Compile the code into an assembly using Unity's built-in compiler
+        // This executes the code directly in Unity's context
     }
 
     private object InvokeExecuteMethod(Assembly assembly)
     {
-        // Invoke the Execute method from the compiled assembly
+        // Create an instance of the DynamicExecutor class
+        // Invoke the Execute method
+        // Return the result
     }
 }
 ```
@@ -723,7 +677,7 @@ public class MethodInvoker
 
 ### 7.5 Logging System
 
-The Logging System provides a way for any code to communicate with the AI by writing to named logs:
+The Logging System provides a way for Unity developers to communicate with the AI assistant by writing to named logs. This enables bidirectional communication, where Unity can send information back to the AI assistant:
 
 ```csharp
 public static class AI
