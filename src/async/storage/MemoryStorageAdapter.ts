@@ -11,7 +11,7 @@ export class MemoryStorageAdapter implements StorageAdapter {
 
   /**
    * Store a result
-   * 
+   *
    * @param logIdOrResult Log ID or operation result
    * @param result Operation result (optional)
    */
@@ -39,7 +39,7 @@ export class MemoryStorageAdapter implements StorageAdapter {
 
   /**
    * Get a result
-   * 
+   *
    * @param logId Log ID
    * @returns Operation result or null if not found
    */
@@ -56,7 +56,7 @@ export class MemoryStorageAdapter implements StorageAdapter {
 
   /**
    * Register a cancellation function for a running operation
-   * 
+   *
    * @param logId Log ID
    * @param cancelFn Function to call to cancel the operation
    */
@@ -72,7 +72,7 @@ export class MemoryStorageAdapter implements StorageAdapter {
 
   /**
    * Unregister a running operation
-   * 
+   *
    * @param logId Log ID
    */
   public async unregisterRunningOperation(logId: string): Promise<void> {
@@ -87,7 +87,7 @@ export class MemoryStorageAdapter implements StorageAdapter {
 
   /**
    * Cancel an operation
-   * 
+   *
    * @param logId Log ID
    * @returns True if the operation was cancelled, false otherwise
    */
@@ -123,7 +123,7 @@ export class MemoryStorageAdapter implements StorageAdapter {
 
   /**
    * List all operations
-   * 
+   *
    * @returns Array of operation info
    */
   public async listOperations(): Promise<any[]> {
@@ -145,7 +145,7 @@ export class MemoryStorageAdapter implements StorageAdapter {
 
   /**
    * Clean up completed operations
-   * 
+   *
    * @param maxAge Maximum age in milliseconds
    */
   public async cleanupCompletedOperations(maxAge: number): Promise<void> {
@@ -162,6 +162,60 @@ export class MemoryStorageAdapter implements StorageAdapter {
     } catch (error) {
       logger.error(`Error cleaning up operations: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
+    }
+  }
+
+  /**
+   * Store a log entry
+   *
+   * @param logId Log ID
+   * @param logName Log name
+   * @param logEntry Log entry
+   */
+  public async storeLogEntry(logId: string, logName: string, logEntry: any): Promise<void> {
+    try {
+      // Create a result with the log entry
+      const result: OperationResult = {
+        logId,
+        status: OperationStatus.SUCCESS,
+        isComplete: true,
+        startTime: Date.now(),
+        endTime: Date.now(),
+        result: {
+          logName,
+          ...logEntry
+        },
+        message: 'Log entry stored'
+      };
+
+      // Store the result
+      await this.storeResult(result);
+    } catch (error) {
+      logger.error(`Error storing log entry: ${error instanceof Error ? error.message : String(error)}`);
+      throw error;
+    }
+  }
+
+  /**
+   * Get logs by name
+   *
+   * @param logName Log name
+   * @param limit Maximum number of logs to return
+   * @returns Logs
+   */
+  public async getLogsByName(logName: string, limit: number = 10): Promise<any[]> {
+    try {
+      // Find all results with the specified log name
+      const logs = Array.from(this.results.values())
+        .filter(result => result.result && result.result.logName === logName)
+        .sort((a, b) => (b.startTime || 0) - (a.startTime || 0))
+        .slice(0, limit)
+        .map(result => result.result);
+
+      return logs;
+    } catch (error) {
+      logger.error(`Error getting logs by name: ${error instanceof Error ? error.message : String(error)}`);
+      return [];
     }
   }
 

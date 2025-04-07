@@ -1,5 +1,6 @@
 import express from 'express';
 import { executeTool, getResult, getManifest, setupSSE, getHelp, cancelOperation, listOperations, updateOperation } from './controllers/toolController';
+import { appendToLog, getLogsByName } from './controllers/logsController';
 
 const router = express.Router();
 
@@ -15,5 +16,9 @@ router.post('/cancel/:logId', cancelOperation);
 
 // New endpoint for Unity to update operation results
 router.post('/update/:logId', updateOperation);
+
+// Logs endpoints
+router.post('/logs', appendToLog); // Create a new log or append to existing log
+router.get('/logs', getLogsByName); // Get logs by name (using query parameter)
 
 export default router;

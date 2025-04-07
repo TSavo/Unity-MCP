@@ -6,9 +6,16 @@ This document provides detailed information about the tools available in the MCP
 
 The MCP server provides a set of tools that can be used to interact with Unity at runtime. These tools are exposed through the MCP STDIO client, which allows Claude to execute them and receive the results.
 
+The MCP tools are organized into two main namespaces:
+
+1. **Executions Namespace**: Tools for executing code in Unity and retrieving results
+2. **Logs Namespace**: Tools for retrieving logs from Unity
+
 ## Available Tools
 
-### unity_execute_code
+### Executions Namespace Tools
+
+#### execute_code
 
 Executes C# code in Unity at runtime.
 
@@ -58,7 +65,7 @@ Executes C# code in Unity at runtime.
 }
 ```
 
-### unity_query
+#### query
 
 Executes a query using dot notation to access objects, properties, and methods.
 
@@ -108,7 +115,7 @@ Executes a query using dot notation to access objects, properties, and methods.
 }
 ```
 
-### unity_get_result
+#### get_result
 
 Retrieves the result of a previously executed operation using its log ID.
 
@@ -165,7 +172,9 @@ Retrieves the result of a previously executed operation using its log ID.
 }
 ```
 
-### unity_get_logs
+### Logs Namespace Tools
+
+#### get_logs
 
 Retrieves logs from Unity, including errors, messages, and custom logs.
 
@@ -217,7 +226,127 @@ Retrieves logs from Unity, including errors, messages, and custom logs.
 }
 ```
 
-### unity_get_log_details
+#### unity_get_logs_by_name
+
+Retrieves logs from Unity by log name.
+
+#### Parameters
+
+```json
+{
+  "log_name": "string",
+  "limit": "number"
+}
+```
+
+- `log_name` (string, required): The log name to retrieve logs for
+- `limit` (number, optional): Maximum number of log entries to return (default: 10)
+
+#### Return Value
+
+```json
+{
+  "status": "success",
+  "log_id": "853ba79c-9e7f-495c-98f7-3d82835c7773",
+  "result": {
+    "logs": [
+      {
+        "logName": "test-log",
+        "data": {
+          "level": "info",
+          "message": "Test message",
+          "timestamp": "2025-04-07T21:43:23.3837695Z"
+        },
+        "timestamp": "2025-04-07T21:43:23.385Z"
+      },
+      {
+        "logName": "test-log",
+        "data": {
+          "level": "error",
+          "message": "Error message",
+          "timestamp": "2025-04-07T21:43:20.366546Z"
+        },
+        "timestamp": "2025-04-07T21:43:20.367Z"
+      }
+    ]
+  },
+  "is_complete": true,
+  "message": "Operation completed successfully"
+}
+```
+
+#### Example
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "5",
+  "method": "tools/call",
+  "params": {
+    "name": "get_logs_by_name",
+    "arguments": {
+      "log_name": "test-log",
+      "limit": 10
+    }
+  }
+}
+```
+
+#### get_log_by_name
+
+Retrieves a single log by its name.
+
+#### Parameters
+
+- `log_name` (string, required): The name of the log to retrieve
+- `limit` (number, optional): Maximum number of entries to return (default: 10)
+
+#### Return Value
+
+```json
+{
+  "status": "success",
+  "log_id": "853ba79c-9e7f-495c-98f7-3d82835c7773",
+  "result": {
+    "name": "test-log",
+    "entries": [
+      {
+        "level": "info",
+        "message": "Test message",
+        "timestamp": "2025-04-07T21:43:23.3837695Z",
+        "data": { "detail": "Info details" }
+      },
+      {
+        "level": "error",
+        "message": "Error message",
+        "timestamp": "2025-04-07T21:43:20.366546Z",
+        "data": { "detail": "Error details" }
+      }
+    ]
+  },
+  "is_complete": true,
+  "message": "Operation completed successfully"
+}
+```
+
+#### Example
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": "5",
+  "method": "tools/call",
+  "params": {
+    "name": "get_log_by_name",
+    "arguments": {
+      "log_name": "test-log",
+      "limit": 10
+    }
+  }
+}
+```
+
+#### get_log_details
 
 Retrieves detailed information about a specific log entry.
 
@@ -262,7 +391,9 @@ Retrieves detailed information about a specific log entry.
 }
 ```
 
-### unity_help
+### Utility Tools
+
+#### help
 
 Retrieves help documentation for all available tools.
 

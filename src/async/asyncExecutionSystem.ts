@@ -11,6 +11,17 @@ import logger from '../utils/logger';
  * Manages the execution of asynchronous operations.
  */
 export class AsyncExecutionSystem {
+  private static instance: AsyncExecutionSystem;
+
+  /**
+   * Get the singleton instance
+   */
+  public static getInstance(): AsyncExecutionSystem {
+    if (!AsyncExecutionSystem.instance) {
+      AsyncExecutionSystem.instance = new AsyncExecutionSystem();
+    }
+    return AsyncExecutionSystem.instance;
+  }
   private readonly registry: OperationRegistry;
   public readonly storage: StorageAdapter;
   private readonly defaultOptions: Partial<OperationOptions> = {
@@ -202,6 +213,42 @@ export class AsyncExecutionSystem {
       clearInterval(this.cleanupInterval);
       this.cleanupInterval = null;
     }
+  }
+
+  /**
+   * Generate a unique ID
+   *
+   * @returns Unique ID
+   */
+  private generateId(): string {
+    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+  }
+
+  /**
+   * Store a log entry
+   *
+   * @param logName Log name
+   * @param logEntry Log entry
+   * @returns Log ID
+   */
+  public async storeLogEntry(logName: string, logEntry: any): Promise<string> {
+    const logId = this.generateId();
+
+    // Store the log entry
+    await this.storage.storeLogEntry(logId, logName, logEntry);
+
+    return logId;
+  }
+
+  /**
+   * Get logs by name
+   *
+   * @param logName Log name
+   * @param limit Maximum number of logs to return
+   * @returns Logs
+   */
+  public async getLogsByName(logName: string, limit: number = 10): Promise<any[]> {
+    return this.storage.getLogsByName(logName, limit);
   }
 
   /**

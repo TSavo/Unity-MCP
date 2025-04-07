@@ -59,7 +59,7 @@ void Awake()
 void OnPlayerAction(PlayerAction action)
 {
     // Log player action with position
-    logger.Info("Player action", new { 
+    logger.Info("Player action", new {
         type = action.type,
         position = transform.position,
         target = action.target
@@ -92,10 +92,10 @@ public class AILoggerTarget : NLog.Targets.TargetWithLayout
     {
         var level = ConvertLogLevel(logEvent.Level);
         var message = Layout.Render(logEvent);
-        
+
         logger.Log(level, message, logEvent.Properties);
     }
-    
+
     private LogLevel ConvertLogLevel(NLog.LogLevel level)
     {
         if (level == NLog.LogLevel.Debug) return LogLevel.Debug;
@@ -121,16 +121,16 @@ public class AILoggerAppender : log4net.Appender.AppenderSkeleton
         var level = ConvertLogLevel(loggingEvent.Level);
         var message = loggingEvent.RenderedMessage;
         var properties = new Dictionary<string, object>();
-        
+
         // Extract properties
         foreach (var key in loggingEvent.Properties.GetKeys())
         {
             properties[key] = loggingEvent.Properties[key];
         }
-        
+
         logger.Log(level, message, properties);
     }
-    
+
     private LogLevel ConvertLogLevel(log4net.Core.Level level)
     {
         if (level == log4net.Core.Level.Debug) return LogLevel.Debug;
@@ -158,15 +158,15 @@ public class ConsoleAppender : ILogAppender
         var color = GetColorForLevel(entry.Level);
         Console.ForegroundColor = color;
         Console.WriteLine($"[{entry.Timestamp:yyyy-MM-dd HH:mm:ss}] [{entry.Level}] [{entry.LoggerName}] {entry.Message}");
-        
+
         if (entry.Data != null)
         {
             Console.WriteLine($"Data: {System.Text.Json.JsonSerializer.Serialize(entry.Data)}");
         }
-        
+
         Console.ResetColor();
     }
-    
+
     private ConsoleColor GetColorForLevel(LogLevel level)
     {
         switch (level)
@@ -193,9 +193,9 @@ The SDK supports structured logging:
 
 ```csharp
 // Log structured data
-logger.Info("User registered", new { 
-    userId = 123, 
-    username = "player1", 
+logger.Info("User registered", new {
+    userId = 123,
+    username = "player1",
     email = "player1@example.com",
     registrationDate = DateTime.Now
 });
@@ -220,19 +220,24 @@ logger.Info("Player state", player);
 AI tools can access the logs using the MCP server tools:
 
 ```typescript
-// Get logs by name
-const logs = await executeAITool('get_logs', {
+// Get all logs
+const allLogs = await executeAITool('get_logs', {
+    limit: 10
+});
+
+// Get a specific log by name
+const log = await executeAITool('get_log_by_name', {
     log_name: 'my-component',
     limit: 10
 });
 
-// Get log details
+// Get details for a specific log entry
 const logDetails = await executeAITool('get_log_details', {
-    log_id: logs[0].id
+    log_id: allLogs[0].id
 });
 
 // Analyze the logs
-const insights = analyzeLogData(logDetails);
+const insights = analyzeLogData(log);
 ```
 
 ## Configuration

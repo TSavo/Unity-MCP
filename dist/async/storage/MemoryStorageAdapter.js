@@ -165,6 +165,58 @@ class MemoryStorageAdapter {
         }
     }
     /**
+     * Store a log entry
+     *
+     * @param logId Log ID
+     * @param logName Log name
+     * @param logEntry Log entry
+     */
+    async storeLogEntry(logId, logName, logEntry) {
+        try {
+            // Create a result with the log entry
+            const result = {
+                logId,
+                status: types_1.OperationStatus.SUCCESS,
+                isComplete: true,
+                startTime: Date.now(),
+                endTime: Date.now(),
+                result: {
+                    logName,
+                    ...logEntry
+                },
+                message: 'Log entry stored'
+            };
+            // Store the result
+            await this.storeResult(result);
+        }
+        catch (error) {
+            logger_1.default.error(`Error storing log entry: ${error instanceof Error ? error.message : String(error)}`);
+            throw error;
+        }
+    }
+    /**
+     * Get logs by name
+     *
+     * @param logName Log name
+     * @param limit Maximum number of logs to return
+     * @returns Logs
+     */
+    async getLogsByName(logName, limit = 10) {
+        try {
+            // Find all results with the specified log name
+            const logs = Array.from(this.results.values())
+                .filter(result => result.result && result.result.logName === logName)
+                .sort((a, b) => (b.startTime || 0) - (a.startTime || 0))
+                .slice(0, limit)
+                .map(result => result.result);
+            return logs;
+        }
+        catch (error) {
+            logger_1.default.error(`Error getting logs by name: ${error instanceof Error ? error.message : String(error)}`);
+            return [];
+        }
+    }
+    /**
      * Close the storage adapter
      * This is used to clean up resources when the adapter is no longer needed
      */

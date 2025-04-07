@@ -229,11 +229,16 @@ async function executeToolImplementation(tool, parameters, reportProgress, tools
                 }))
             };
         case 'unity_get_logs':
+            // Get all logs from the AsyncExecutionSystem
+            const operations = await asyncExecutionSystem.listOperations();
             return {
-                logs: [
-                    { id: 'log1', message: 'Test log 1', timestamp: new Date().toISOString(), type: 'info' },
-                    { id: 'log2', message: 'Test log 2', timestamp: new Date().toISOString(), type: 'warning' }
-                ]
+                operations
+            };
+        case 'unity_get_logs_by_name':
+            // Get logs by name from the AsyncExecutionSystem
+            const logsByName = await asyncExecutionSystem.getLogsByName(parameters.log_name, parameters.limit || 10);
+            return {
+                logs: logsByName
             };
         case 'unity_get_log_details':
             return {

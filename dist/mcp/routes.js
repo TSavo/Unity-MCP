@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const toolController_1 = require("./controllers/toolController");
+const logsController_1 = require("./controllers/logsController");
 const router = express_1.default.Router();
 // API endpoints
 router.get('/manifest', toolController_1.getManifest);
@@ -16,4 +17,7 @@ router.post('/tools', toolController_1.executeTool);
 router.post('/cancel/:logId', toolController_1.cancelOperation);
 // New endpoint for Unity to update operation results
 router.post('/update/:logId', toolController_1.updateOperation);
+// Logs endpoints
+router.post('/logs/:logName/append', logsController_1.appendToLog);
+router.get('/logs/:logName', logsController_1.getLogsByName);
 exports.default = router;

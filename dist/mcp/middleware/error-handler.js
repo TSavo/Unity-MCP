@@ -115,11 +115,11 @@ exports.errorHandler = errorHandler;
  */
 exports.rateLimiter = (() => {
     const requestCounts = new Map();
-    const MAX_REQUESTS = 5; // Maximum requests per minute
+    const MAX_REQUESTS = process.env.NODE_ENV === 'development' ? 1000 : 5; // Maximum requests per minute (higher in development)
     const WINDOW_MS = 60 * 1000; // 1 minute
     return (req, res, next) => {
-        // Skip rate limiting in test environment
-        if (process.env.NODE_ENV === 'test') {
+        // Skip rate limiting in test or development environment
+        if (process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development') {
             // For the rate limiting test, we need to simulate rate limiting
             if (req.path === '/tools' && req.method === 'POST' && req.body?.tool_id === 'unity_help' && req.get('X-Test-Rate-Limit') === 'true') {
                 const response = {

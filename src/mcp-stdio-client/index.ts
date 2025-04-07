@@ -338,6 +338,51 @@ export async function createMcpStdioClient(webServerUrl: string = process.env.WE
     }
   );
 
+  // Get logs by name tool
+  server.tool("get_logs_by_name",
+    {
+      log_name: z.string().describe("Name of the log to retrieve"),
+      limit: z.number().optional().describe("Maximum number of log entries to return (default: 10)")
+    },
+    async ({ log_name, limit = 10 }) => {
+      try {
+        logger.info(`Getting logs for log name: ${log_name}, limit: ${limit}`);
+
+        // Forward to Web Server
+        const response = await axios.post(`${webServerUrl}/tools`, {
+          tool_id: "unity_get_logs_by_name",
+          parameters: {
+            log_name,
+            limit
+          }
+        });
+
+        const result = response.data;
+        logger.debug(`Received logs: ${JSON.stringify(result).substring(0, 200)}${JSON.stringify(result).length > 200 ? '...' : ''}`);
+
+        // Return result to Claude
+        return {
+          content: [{
+            type: "text",
+            text: typeof result === 'object' ? JSON.stringify(result, null, 2) : String(result)
+          }]
+        };
+      } catch (error) {
+        // Log the error
+        logger.error(`Error getting logs by name: ${error instanceof Error ? error.message : String(error)}`);
+
+        // Return error to Claude
+        return {
+          content: [{
+            type: "text",
+            text: `Error: ${error instanceof Error ? error.message : String(error)}`
+          }],
+          isError: true
+        };
+      }
+    }
+  );
+
   // Get log details tool
   server.tool("get_log_details",
     {

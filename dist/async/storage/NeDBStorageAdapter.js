@@ -241,6 +241,38 @@ class NeDBStorageAdapter {
         }
     }
     /**
+     * Store a log entry
+     *
+     * @param logId Log ID
+     * @param logName Log name
+     * @param logEntry Log entry
+     */
+    async storeLogEntry(logId, logName, logEntry) {
+        await this.ensureInitialized();
+        // Create a document with the log entry
+        const document = {
+            logId,
+            logName,
+            ...logEntry,
+            timestamp: new Date().toISOString()
+        };
+        // Insert the document
+        await this.insert(this.resultsDb, document);
+    }
+    /**
+     * Get logs by name
+     *
+     * @param logName Log name
+     * @param limit Maximum number of logs to return
+     * @returns Logs
+     */
+    async getLogsByName(logName, limit = 10) {
+        await this.ensureInitialized();
+        // Find all documents with the specified log name
+        const documents = await this.find(this.resultsDb, { logName }, { timestamp: -1 }, limit);
+        return documents;
+    }
+    /**
      * Close the adapter
      * This is used to clean up resources when the adapter is no longer needed
      */
@@ -297,11 +329,20 @@ class NeDBStorageAdapter {
      *
      * @param db Database to search
      * @param query Query to execute
+     * @param sort Sort options
+     * @param limit Maximum number of documents to return
      * @returns Array of documents
      */
-    find(db, query) {
+    find(db, query, sort, limit) {
         return new Promise((resolve, reject) => {
-            db.find(query, (err, docs) => {
+            let cursor = db.find(query);
+            if (sort) {
+                cursor = cursor.sort(sort);
+            }
+            if (limit) {
+                cursor = cursor.limit(limit);
+            }
+            cursor.exec((err, docs) => {
                 if (err) {
                     reject(err);
                 }
