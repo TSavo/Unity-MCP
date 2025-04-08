@@ -13,8 +13,8 @@
     "test:unit": "jest --testPathIgnorePatterns=e2e",
     "test:e2e": "jest --config e2e/jest.config.js",
     "build": "tsc",
-    "start": "node dist/mcp-stdio-client-new.js",
-    "dev": "tsc -w & nodemon dist/mcp-stdio-client-new.js"
+    "start": "node dist/mcp-stdio-client.js",
+    "dev": "tsc -w & nodemon dist/mcp-stdio-client.js"
   },
   "keywords": [],
   "author": "",

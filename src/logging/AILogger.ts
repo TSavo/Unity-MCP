@@ -29,12 +29,12 @@ export interface AILoggerOptions {
    * MCP server URL
    */
   mcpServerUrl?: string;
-  
+
   /**
    * Default log level
    */
   defaultLevel?: LogLevel;
-  
+
   /**
    * Whether to include timestamps automatically
    */
@@ -43,9 +43,9 @@ export interface AILoggerOptions {
 
 /**
  * AILogger
- * 
+ *
  * A simple logger for AI tools that logs to the MCP server.
- * 
+ *
  * Example:
  * ```typescript
  * const logger = new AILogger('my-component');
@@ -61,20 +61,20 @@ export class AILogger {
 
   /**
    * Create a new AILogger
-   * 
+   *
    * @param logName Name of the log
    * @param options Logger options
    */
   constructor(logName: string, options: AILoggerOptions = {}) {
     this.logName = logName;
-    this.mcpServerUrl = options.mcpServerUrl || 'http://localhost:8080';
+    this.mcpServerUrl = options.mcpServerUrl || 'http://localhost:3030';
     this.defaultLevel = options.defaultLevel || LogLevel.INFO;
     this.includeTimestamps = options.includeTimestamps !== false; // Default to true
   }
 
   /**
    * Log a message at the specified level
-   * 
+   *
    * @param level Log level
    * @param message Message to log
    * @param data Additional data to log
@@ -92,7 +92,7 @@ export class AILogger {
 
       // Send log to MCP server
       const response = await axios.post(`${this.mcpServerUrl}/logs/${this.logName}`, logData);
-      
+
       return response.data.logId;
     } catch (error) {
       console.error(`Error logging to ${this.logName}: ${error instanceof Error ? error.message : String(error)}`);
@@ -102,7 +102,7 @@ export class AILogger {
 
   /**
    * Log a debug message
-   * 
+   *
    * @param message Message to log
    * @param data Additional data to log
    * @returns Promise that resolves when the log is written
@@ -113,7 +113,7 @@ export class AILogger {
 
   /**
    * Log an info message
-   * 
+   *
    * @param message Message to log
    * @param data Additional data to log
    * @returns Promise that resolves when the log is written
@@ -124,7 +124,7 @@ export class AILogger {
 
   /**
    * Log a warning message
-   * 
+   *
    * @param message Message to log
    * @param data Additional data to log
    * @returns Promise that resolves when the log is written
@@ -135,7 +135,7 @@ export class AILogger {
 
   /**
    * Log an error message
-   * 
+   *
    * @param message Message to log
    * @param data Additional data to log
    * @returns Promise that resolves when the log is written
@@ -146,7 +146,7 @@ export class AILogger {
 
   /**
    * Log a fatal message
-   * 
+   *
    * @param message Message to log
    * @param data Additional data to log
    * @returns Promise that resolves when the log is written
@@ -157,7 +157,7 @@ export class AILogger {
 
   /**
    * Clear the log
-   * 
+   *
    * @returns Promise that resolves when the log is cleared
    */
   public async clear(): Promise<boolean> {
@@ -172,7 +172,7 @@ export class AILogger {
 
   /**
    * Get log entries
-   * 
+   *
    * @param limit Maximum number of entries to return
    * @returns Promise that resolves with the log entries
    */
@@ -181,7 +181,7 @@ export class AILogger {
       const response = await axios.get(`${this.mcpServerUrl}/logs/${this.logName}`, {
         params: { limit }
       });
-      
+
       return response.data.entries || [];
     } catch (error) {
       console.error(`Error getting log entries for ${this.logName}: ${error instanceof Error ? error.message : String(error)}`);

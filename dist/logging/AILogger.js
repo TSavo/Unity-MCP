@@ -37,7 +37,7 @@ class AILogger {
      */
     constructor(logName, options = {}) {
         this.logName = logName;
-        this.mcpServerUrl = options.mcpServerUrl || 'http://localhost:8080';
+        this.mcpServerUrl = options.mcpServerUrl || 'http://localhost:3030';
         this.defaultLevel = options.defaultLevel || LogLevel.INFO;
         this.includeTimestamps = options.includeTimestamps !== false; // Default to true
     }

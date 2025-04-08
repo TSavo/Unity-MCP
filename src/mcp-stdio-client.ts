@@ -64,7 +64,7 @@ class FileLogger {
 
   /**
    * Write a log message to the file
-   * 
+   *
    * @param level Log level
    * @param message Message to log
    */
@@ -78,7 +78,7 @@ class FileLogger {
 
   /**
    * Log an info message
-   * 
+   *
    * @param message Message to log
    */
   public info(message: string): void {
@@ -87,7 +87,7 @@ class FileLogger {
 
   /**
    * Log a debug message
-   * 
+   *
    * @param message Message to log
    */
   public debug(message: string): void {
@@ -96,7 +96,7 @@ class FileLogger {
 
   /**
    * Log a warning message
-   * 
+   *
    * @param message Message to log
    */
   public warn(message: string): void {
@@ -105,7 +105,7 @@ class FileLogger {
 
   /**
    * Log an error message
-   * 
+   *
    * @param message Message to log
    */
   public error(message: string): void {
@@ -127,7 +127,7 @@ class FileLogger {
 const logger = new FileLogger(LOG_FILE);
 
 // Get the AILogger URL from environment variables or use default
-const aiLoggerUrl = process.env.AI_LOGGER_URL || 'http://localhost:8080';
+const aiLoggerUrl = process.env.AI_LOGGER_URL || 'http://localhost:3030';
 
 // Log the AILogger URL
 logger.info(`Using AILogger URL: ${aiLoggerUrl}`);
@@ -227,8 +227,8 @@ server.tool("query",
 
 // Add get_logs tool
 server.tool("get_logs",
-  { 
-    limit: z.number().optional() 
+  {
+    limit: z.number().optional()
   },
   async (args) => {
     try {
@@ -296,7 +296,7 @@ server.tool("get_log_by_name",
 
 /**
  * Store a result in AILogger
- * 
+ *
  * @param logName Log name
  * @param result Result to store
  */

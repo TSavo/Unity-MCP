@@ -15,7 +15,7 @@ describe('MCP Error Handling', () => {
     server = new MCPServer({
       name: 'test-server',
       description: 'Test MCP Server',
-      port: 8080
+      port: 3030
     });
     app = server.getExpressApp();
   });

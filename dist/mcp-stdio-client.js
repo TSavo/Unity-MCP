@@ -115,7 +115,7 @@ class FileLogger {
 // Create a logger
 const logger = new FileLogger(LOG_FILE);
 // Get the AILogger URL from environment variables or use default
-const aiLoggerUrl = process.env.AI_LOGGER_URL || 'http://localhost:8080';
+const aiLoggerUrl = process.env.AI_LOGGER_URL || 'http://localhost:3030';
 // Log the AILogger URL
 logger.info(`Using AILogger URL: ${aiLoggerUrl}`);
 // Create a Unity client

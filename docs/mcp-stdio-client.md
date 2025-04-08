@@ -7,8 +7,9 @@ This document explains how to use the MCP STDIO client, which allows Claude to c
 The MCP STDIO client is a Node.js application that:
 
 1. Communicates with Claude via stdin/stdout using the Model Context Protocol (MCP)
-2. Forwards requests to the MCP Server running in Docker
-3. Logs to a fully qualified path for easy access
+2. Forwards requests directly to Unity
+3. Stores results in AILogger for later retrieval
+4. Logs to a fully qualified path for easy access
 
 ## Logging
 
@@ -57,26 +58,46 @@ To use the MCP STDIO client, pipe JSON-RPC 2.0 messages to it:
 echo '{"jsonrpc":"2.0","id":"1","method":"initialize","params":{"protocolVersion":"0.1.0","clientInfo":{"name":"test-client","version":"1.0.0"},"capabilities":{}}}' | node dist/mcp-stdio-client/index.js
 ```
 
-### Using with Docker
+### Using with AILogger
 
-When using the MCP STDIO client with the Docker development environment, you need to ensure it connects to the MCP server running in Docker. By default, the client connects to `http://localhost:8080`, which works because the Docker container exposes port 8080 to the host machine.
+The MCP STDIO client now uses AILogger for persistence. By default, it connects to AILogger running on `http://localhost:3030`.
 
-If you need to specify a different URL, you can use the `WEB_SERVER_URL` environment variable:
+If you need to specify a different URL, you can use the `AI_LOGGER_URL` environment variable:
 
 ```bash
-# Connect to a specific URL
-WEB_SERVER_URL=http://localhost:8080 echo '{"jsonrpc":"2.0","id":"1","method":"initialize","params":{"protocolVersion":"0.1.0","clientInfo":{"name":"test-client","version":"1.0.0"},"capabilities":{}}}' | node dist/mcp-stdio-client/index.js
+# Connect to a specific AILogger URL
+AI_LOGGER_URL=http://localhost:3030 echo '{"jsonrpc":"2.0","id":"1","method":"initialize","params":{"protocolVersion":"0.1.0","clientInfo":{"name":"test-client","version":"1.0.0"},"capabilities":{}}}' | node dist/mcp-stdio-client.js
 ```
+
+### Using with Docker
+
+When using the MCP STDIO client with Docker, you need to ensure it can connect to both Unity and AILogger.
+
+1. Start the AILogger Docker container:
+   ```bash
+   cd AILogger
+   docker-compose up -d
+   ```
+
+2. Start the MCP STDIO client:
+   ```bash
+   cd Unity-MCP
+   npm start
+   ```
 
 ### Testing the Connection
 
-To test if the MCP STDIO client can connect to the MCP server running in Docker, you can use the `help` tool:
+To test if the MCP STDIO client can connect to Unity and AILogger, you can use the `execute_code` tool:
 
 ```bash
-echo '{"jsonrpc":"2.0","id":"1","method":"tools/call","params":{"name":"help","arguments":{}}}' | node dist/mcp-stdio-client/index.js
+echo '{"jsonrpc":"2.0","id":"1","method":"tools/call","params":{"name":"execute_code","arguments":{"code":"return \"Hello from Unity!\";"}}}}' | node dist/mcp-stdio-client.js
 ```
 
-If the connection is successful, you should see a JSON response with help information.
+If the connection is successful, you should see a JSON response with a log name. You can then retrieve the log from AILogger:
+
+```bash
+echo '{"jsonrpc":"2.0","id":"2","method":"tools/call","params":{"name":"get_log_by_name","arguments":{"log_name":"unity-execute-1712534400000"}}}' | node dist/mcp-stdio-client.js
+```
 
 ## Available Tools
 
@@ -114,7 +135,7 @@ The MCP STDIO client provides the following tools:
    }
    ```
 
-3. **get_logs**: Get logs with pagination
+3. **get_logs**: Get logs from AILogger with pagination
    ```json
    {
      "jsonrpc": "2.0",
@@ -123,37 +144,24 @@ The MCP STDIO client provides the following tools:
      "params": {
        "name": "get_logs",
        "arguments": {
-         "count": 10,
-         "offset": 0
+         "limit": 10
        }
      }
    }
    ```
 
-4. **get_log_details**: Get log details by log ID
+4. **get_log_by_name**: Get a specific log from AILogger by name
    ```json
    {
      "jsonrpc": "2.0",
      "id": "5",
      "method": "tools/call",
      "params": {
-       "name": "get_log_details",
+       "name": "get_log_by_name",
        "arguments": {
-         "logId": "123"
+         "log_name": "unity-execute-1712534400000",
+         "limit": 10
        }
-     }
-   }
-   ```
-
-5. **help**: Get help information
-   ```json
-   {
-     "jsonrpc": "2.0",
-     "id": "6",
-     "method": "tools/call",
-     "params": {
-       "name": "help",
-       "arguments": {}
      }
    }
    ```
@@ -166,68 +174,64 @@ If you encounter issues with the MCP STDIO client, check the log file for error 
 
 1. **Permission denied when writing to log directory**: The client will fall back to writing logs to the user's home directory.
 
-2. **Connection refused when connecting to MCP Server**: Make sure the MCP Server is running in Docker on port 8080. You can check if the container is running with:
+2. **Connection refused when connecting to AILogger**: Make sure the AILogger server is running on port 3030. You can check if the container is running with:
    ```bash
-   docker ps | grep mcp-server-dev
+   docker ps | grep ailogger
    ```
 
-3. **Timeout when executing code in Unity**: Make sure the Unity Client is running in Docker on port 8081 and is connected to Unity. You can check if the container is running with:
-   ```bash
-   docker ps | grep unity-client-dev
-   ```
+3. **Timeout when executing code in Unity**: Make sure Unity is running and accessible. Check the Unity logs for any errors.
 
 ### Docker-Specific Issues
 
-1. **Port conflicts**: If another application is using port 8080 or 8081, Docker won't be able to bind to these ports. You can check for port conflicts with:
+1. **Port conflicts**: If another application is using port 3030, Docker won't be able to bind to this port. You can check for port conflicts with:
    ```bash
    # On Windows
-   netstat -ano | findstr :8080
-   netstat -ano | findstr :8081
+   netstat -ano | findstr :3030
 
    # On Linux/macOS
-   lsof -i :8080
-   lsof -i :8081
+   lsof -i :3030
    ```
 
-2. **Docker network issues**: If the MCP STDIO client can't connect to the MCP server, make sure the Docker network is set up correctly. You can check the Docker network with:
+2. **Docker network issues**: If the MCP STDIO client can't connect to AILogger, make sure the Docker network is set up correctly. You can check the Docker network with:
    ```bash
-   docker network inspect mcp-network
+   docker network inspect ailogger_default
    ```
 
-3. **Container not starting**: If the containers aren't starting properly, check the Docker logs:
+3. **Container not starting**: If the AILogger container isn't starting properly, check the Docker logs:
    ```bash
-   docker logs mcp-server-dev
-   docker logs unity-client-dev
+   docker logs ailogger-ailogger-1
    ```
 
-4. **MCP server not connecting to Unity client**: The MCP server needs to connect to the Unity client using the Docker container name instead of localhost. Make sure the `UNITY_HOST` environment variable is set correctly in the Docker Compose file:
-   ```yaml
-   # docker-compose.dev.yml
-   environment:
-     - NODE_ENV=development
-     - UNITY_HOST=unity-client-dev
+4. **AILogger not accessible**: Make sure the AILogger server is exposing port 3030 correctly. You can check the port mapping with:
+   ```bash
+   docker ps | grep ailogger
    ```
 
 ### Verifying the Setup
 
 To verify that the entire setup is working correctly:
 
-1. Make sure the Docker containers are running:
+1. Make sure the AILogger Docker container is running:
    ```bash
-   docker ps
+   docker ps | grep ailogger
    ```
 
-2. Test the MCP server directly:
+2. Test the AILogger server directly:
    ```bash
-   curl http://localhost:8080/help
+   curl http://localhost:3030/logs
    ```
 
-3. Test the Unity client directly:
+3. Test Unity connectivity (if you have a Unity API endpoint):
    ```bash
    curl http://localhost:8081/api/CodeExecution/status
    ```
 
 4. Test the MCP STDIO client:
    ```bash
-   echo '{"jsonrpc":"2.0","id":"1","method":"tools/call","params":{"name":"help","arguments":{}}}' | node dist/mcp-stdio-client/index.js
+   echo '{"jsonrpc":"2.0","id":"1","method":"tools/call","params":{"name":"execute_code","arguments":{"code":"return \"Hello from Unity!\";"}}}}' | node dist/mcp-stdio-client.js
+   ```
+
+5. Test retrieving logs from AILogger:
+   ```bash
+   curl http://localhost:3030/logs/unity-execute-1712534400000
    ```

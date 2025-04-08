@@ -148,7 +148,7 @@ describe('MCP STDIO Client', () => {
 
     // Assert
     expect(axios.post).toHaveBeenCalledWith(
-      'http://localhost:8080/api/tools',
+      'http://localhost:3030/api/tools',
       {
         tool_id: 'unity_execute_code',
         parameters: {
