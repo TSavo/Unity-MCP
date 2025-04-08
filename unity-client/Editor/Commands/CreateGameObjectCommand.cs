@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityMCP.Client.Editor.Logging;
 
 namespace UnityMCP.Client.Editor.Commands
 {
@@ -36,7 +37,7 @@ namespace UnityMCP.Client.Editor.Commands
 
             // Log the creation
             Debug.Log($"[Unity MCP] Created GameObject: {gameObject.name}");
-            AILogger.Log("unity-create-result", new { gameObject = gameObject.name });
+            AILoggerStatic.Log("unity-create-result", new { gameObject = gameObject.name });
 
             // Store the result in the context if a variable name was provided
             if (!string.IsNullOrEmpty(ResultVariableName))
