@@ -266,7 +266,7 @@ namespace UnityMCP.Client.Editor
         /// </summary>
         /// <param name="logName">The name of the log</param>
         /// <param name="data">The data to store</param>
-        private static void StoreLogEntry(string logName, object data)
+        public static void StoreLogEntry(string logName, object data)
         {
             lock (logLock)
             {

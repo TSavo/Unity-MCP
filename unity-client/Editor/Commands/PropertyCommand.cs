@@ -1,6 +1,7 @@
 using System;
 using System.Reflection;
 using UnityEngine;
+using UnityMCP.Client.Editor.Logging;
 
 namespace UnityMCP.Client.Editor.Commands
 {
@@ -11,7 +12,7 @@ namespace UnityMCP.Client.Editor.Commands
     {
         private readonly string _objectVariableName;
         private readonly string _propertyName;
-        
+
         /// <summary>
         /// Create a new PropertyCommand
         /// </summary>
@@ -24,7 +25,7 @@ namespace UnityMCP.Client.Editor.Commands
             _objectVariableName = objectVariableName;
             _propertyName = propertyName;
         }
-        
+
         /// <summary>
         /// Execute the command and return the result
         /// </summary>
@@ -39,7 +40,7 @@ namespace UnityMCP.Client.Editor.Commands
                 Debug.LogError($"[Unity MCP] Object '{_objectVariableName}' not found in context");
                 return null;
             }
-            
+
             // Get the property value using reflection
             try
             {
@@ -54,35 +55,36 @@ namespace UnityMCP.Client.Editor.Commands
                         Debug.LogError($"[Unity MCP] Property or field '{_propertyName}' not found on object '{_objectVariableName}'");
                         return null;
                     }
-                    
+
                     // Get the field value
                     object result = fieldInfo.GetValue(obj);
-                    
+
                     // Log the result
                     Debug.Log($"[Unity MCP] Got field '{_propertyName}' from object '{_objectVariableName}': {result}");
-                    
+
                     // Store the result in the context if a variable name was provided
                     if (!string.IsNullOrEmpty(ResultVariableName))
                     {
                         context.SetVariable(ResultVariableName, result);
                     }
-                    
+
                     // Return the result
                     return result;
                 }
-                
+
                 // Get the property value
                 object propertyValue = propertyInfo.GetValue(obj);
-                
+
                 // Log the result
                 Debug.Log($"[Unity MCP] Got property '{_propertyName}' from object '{_objectVariableName}': {propertyValue}");
-                
+                Logging.AILoggerStatic.Log("unity-property-result", new { property = _propertyName, value = propertyValue?.ToString() });
+
                 // Store the result in the context if a variable name was provided
                 if (!string.IsNullOrEmpty(ResultVariableName))
                 {
                     context.SetVariable(ResultVariableName, propertyValue);
                 }
-                
+
                 // Return the property value
                 return propertyValue;
             }
