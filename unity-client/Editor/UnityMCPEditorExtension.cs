@@ -323,10 +323,17 @@ namespace UnityMCP.Client.Editor
         /// <param name="cancellationToken">Cancellation token to stop the thread</param>
         private static void HandleHttpRequests(CancellationToken cancellationToken)
         {
+            // Create a debug logger
+            var debugLogger = new AILogger("unity-http-debug");
+            _ = debugLogger.Info("HTTP server thread started");
+
             while (httpListener != null && httpListener.IsListening && !cancellationToken.IsCancellationRequested)
             {
                 try
                 {
+                    // Log that we're waiting for a request
+                    _ = debugLogger.Info("Waiting for HTTP request");
+
                     // Create a task to get the context with a timeout
                     var contextTask = Task.Run(() => httpListener.GetContext());
 
@@ -338,6 +345,9 @@ namespace UnityMCP.Client.Editor
                         var request = context.Request;
                         var response = context.Response;
 
+                        // Log the request
+                        _ = debugLogger.Info($"Received request: {request.HttpMethod} {request.Url.AbsolutePath}");
+
                         // Handle the request
                         string responseText = "";
                         bool handled = false;
@@ -345,12 +355,16 @@ namespace UnityMCP.Client.Editor
                         // Handle ping requests
                         if (request.Url.AbsolutePath == "/ping")
                         {
+                            _ = debugLogger.Info("Handling ping request");
                             responseText = "pong";
                             handled = true;
+                            _ = debugLogger.Info("Ping request handled");
                         }
                         // Handle game state requests
                         else if (request.Url.AbsolutePath == "/api/CodeExecution/game-state")
                         {
+                            _ = debugLogger.Info("Handling game state request");
+
                             // Create a simple game state directly
                             // This avoids the thread safety issues
                             var gameState = new EditorGameState
@@ -366,6 +380,7 @@ namespace UnityMCP.Client.Editor
 
                             // Log that we're returning a default game state
                             Debug.Log("[Unity MCP] Returning default game state");
+                            _ = debugLogger.Info("Created game state object");
 
                             // Create a log entry for the AI
                             var logEntry = new
@@ -383,8 +398,12 @@ namespace UnityMCP.Client.Editor
                                 timestamp = DateTime.UtcNow
                             };
 
+                            _ = debugLogger.Info("Created log entry");
+
                             // Store the log entry for the AI to retrieve
                             StoreLogEntry("unity-state-" + DateTime.UtcNow.Ticks, logEntry);
+
+                            _ = debugLogger.Info("Stored log entry");
 
                             responseText = $"{{\"isPlaying\":{gameState.IsPlaying.ToString().ToLower()},\"isPaused\":{gameState.IsPaused.ToString().ToLower()},\"isCompiling\":{gameState.IsCompiling.ToString().ToLower()},\"currentScene\":\"{gameState.CurrentScene}\",\"timeScale\":{gameState.TimeScale},\"frameCount\":{gameState.FrameCount},\"realtimeSinceStartup\":{gameState.RealtimeSinceStartup}}}";
                             handled = true;
@@ -443,32 +462,42 @@ namespace UnityMCP.Client.Editor
                         }
 
                         // Send the response
+                        // Write the response
+                        _ = debugLogger.Info("Writing response");
                         if (handled)
                         {
+                            _ = debugLogger.Info($"Response: {responseText}");
                             byte[] buffer = Encoding.UTF8.GetBytes(responseText);
                             response.ContentLength64 = buffer.Length;
                             response.ContentType = "application/json";
                             response.StatusCode = 200;
+                            _ = debugLogger.Info("Writing to output stream");
                             response.OutputStream.Write(buffer, 0, buffer.Length);
+                            _ = debugLogger.Info("Wrote to output stream");
                         }
                         else
                         {
+                            _ = debugLogger.Info("Request not handled, returning 404");
                             response.StatusCode = 404;
                         }
 
+                        _ = debugLogger.Info("Closing response");
                         response.Close();
+                        _ = debugLogger.Info("Response closed");
                     }
                 }
                 catch (OperationCanceledException)
                 {
                     // This is expected when cancellation is requested
                     Debug.Log("[Unity MCP] HTTP server thread was cancelled");
+                    _ = debugLogger.Info("HTTP server thread was cancelled");
                     break;
                 }
                 catch (ThreadAbortException)
                 {
                     // This is expected when Unity is shutting down
                     Debug.Log("[Unity MCP] HTTP server thread was aborted");
+                    _ = debugLogger.Info("HTTP server thread was aborted");
                     break;
                 }
                 catch (Exception ex)
@@ -477,6 +506,7 @@ namespace UnityMCP.Client.Editor
                     if (!cancellationToken.IsCancellationRequested)
                     {
                         Debug.LogError($"[Unity MCP] Error handling HTTP request: {ex.Message}");
+                        _ = debugLogger.Error($"Error handling HTTP request: {ex.Message}", new { stackTrace = ex.StackTrace });
                     }
 
                     // Add a small delay to prevent CPU spinning in case of repeated errors
