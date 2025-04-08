@@ -135,7 +135,6 @@ namespace UnityMCP.Client.Editor
 
                         // Log that we're returning a default game state
                         Debug.Log("[Unity MCP] Returning default game state due to thread safety issues");
-                        AI.Log("unity-state").Append(new { message = "Returning default game state due to thread safety issues", gameState });
 
                         responseText = $"{{\"isPlaying\":{gameState.IsPlaying.ToString().ToLower()},\"isPaused\":{gameState.IsPaused.ToString().ToLower()},\"isCompiling\":{gameState.IsCompiling.ToString().ToLower()},\"currentScene\":\"{gameState.CurrentScene}\",\"timeScale\":{gameState.TimeScale},\"frameCount\":{gameState.FrameCount},\"realtimeSinceStartup\":{gameState.RealtimeSinceStartup}}}";
                         handled = true;
