@@ -608,6 +608,7 @@ public class UnityMCPEditorExtension
                     bool success = false;
                     string result = "";
                     string error = "";
+                    string commandType = "";
 
                     // Schedule the code execution on the main thread
                     EditorApplication.delayCall += () =>
@@ -637,6 +638,7 @@ public class UnityMCPEditorExtension
 
                                 success = true;
                                 result = executionResult != null ? executionResult.ToString() : "null";
+                                commandType = executionResult != null ? executionResult.GetType().Name : "null";
                                 Debug.Log($"[Unity MCP] Code execution result: {result}");
 
                                 // Store the result in a log entry
@@ -690,11 +692,11 @@ public class UnityMCPEditorExtension
                         // Return the result
                         if (success)
                         {
-                            responseText = $"{{ \"success\": true, \"result\": \"{result}\", \"logs\": [\"Code executed successfully\"], \"executionTime\": 0 }}";
+                            responseText = $"{{ \"success\": true, \"result\": \"{result}\", \"code\": \"{code}\", \"commandType\": \"{commandType}\", \"logs\": [\"Code executed successfully\"], \"executionTime\": 0 }}";
                         }
                         else
                         {
-                            responseText = $"{{ \"success\": false, \"error\": \"{error}\", \"logs\": [\"Error executing code\"], \"executionTime\": 0 }}";
+                            responseText = $"{{ \"success\": false, \"error\": \"{error}\", \"code\": \"{code}\", \"logs\": [\"Error executing code\"], \"executionTime\": 0 }}";
                         }
                     }
                     catch (OperationCanceledException)
