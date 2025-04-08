@@ -129,7 +129,7 @@ namespace UnityMCP.Client.Editor.Commands
                     {
                         // Single-line comment
                         _position += 2;
-                        while (_position < _code.Length && _code[_position] != '\\n')
+                        while (_position < _code.Length && _code[_position] != '\n')
                         {
                             _position++;
                         }
