@@ -26,6 +26,7 @@ namespace UnityMCP.Client.Editor
         private static HttpListener httpListener;
         private static Thread serverThread;
         private static int serverPort = 8081;
+        private static CancellationTokenSource cancellationTokenSource;
 
         /// <summary>
         /// Static constructor called on Unity Editor startup
@@ -74,18 +75,24 @@ namespace UnityMCP.Client.Editor
 
             try
             {
+                // Create a new cancellation token source
+                cancellationTokenSource = new CancellationTokenSource();
+
                 // Create a new HTTP listener
                 httpListener = new HttpListener();
                 httpListener.Prefixes.Add($"http://localhost:{serverPort}/");
                 httpListener.Start();
 
                 // Start a thread to handle HTTP requests
-                serverThread = new Thread(HandleHttpRequests);
+                serverThread = new Thread(() => HandleHttpRequests(cancellationTokenSource.Token));
                 serverThread.IsBackground = true;
                 serverThread.Start();
 
                 // Set the flag
                 serverStarted = true;
+
+                // Register for domain unload to ensure clean shutdown
+                AppDomain.CurrentDomain.DomainUnload += (sender, e) => StopServer();
 
                 Debug.Log($"[Unity MCP] Unity MCP server started on port {serverPort}");
             }
@@ -98,100 +105,128 @@ namespace UnityMCP.Client.Editor
         /// <summary>
         /// Handle HTTP requests
         /// </summary>
-        private static void HandleHttpRequests()
+        /// <param name="cancellationToken">Cancellation token to stop the thread</param>
+        private static void HandleHttpRequests(CancellationToken cancellationToken)
         {
-            while (httpListener != null && httpListener.IsListening)
+            while (httpListener != null && httpListener.IsListening && !cancellationToken.IsCancellationRequested)
             {
                 try
                 {
-                    // Wait for a request
-                    var context = httpListener.GetContext();
-                    var request = context.Request;
-                    var response = context.Response;
+                    // Create a task to get the context with a timeout
+                    var contextTask = Task.Run(() => httpListener.GetContext());
 
-                    // Handle the request
-                    string responseText = "";
-                    bool handled = false;
+                    // Wait for the task to complete or for cancellation
+                    if (Task.WaitAny(new[] { contextTask }, 1000, cancellationToken) == 0)
+                    {
+                        // Task completed successfully
+                        var context = contextTask.Result;
+                        var request = context.Request;
+                        var response = context.Response;
 
-                    // Handle ping requests
-                    if (request.Url.AbsolutePath == "/ping")
-                    {
-                        responseText = "pong";
-                        handled = true;
-                    }
-                    // Handle game state requests
-                    else if (request.Url.AbsolutePath == "/api/CodeExecution/game-state")
-                    {
-                        // Create a simple game state directly
-                        // This avoids the thread safety issues
-                        var gameState = new EditorGameState
+                        // Handle the request
+                        string responseText = "";
+                        bool handled = false;
+
+                        // Handle ping requests
+                        if (request.Url.AbsolutePath == "/ping")
                         {
-                            IsPlaying = false, // We'll set this to a default value
-                            IsPaused = false,
-                            IsCompiling = false,
-                            CurrentScene = "SampleScene",
-                            TimeScale = 1.0f,
-                            FrameCount = 0,
-                            RealtimeSinceStartup = 0.0f
-                        };
+                            responseText = "pong";
+                            handled = true;
+                        }
+                        // Handle game state requests
+                        else if (request.Url.AbsolutePath == "/api/CodeExecution/game-state")
+                        {
+                            // Create a simple game state directly
+                            // This avoids the thread safety issues
+                            var gameState = new EditorGameState
+                            {
+                                IsPlaying = false, // We'll set this to a default value
+                                IsPaused = false,
+                                IsCompiling = false,
+                                CurrentScene = "SampleScene",
+                                TimeScale = 1.0f,
+                                FrameCount = 0,
+                                RealtimeSinceStartup = 0.0f
+                            };
 
-                        // Log that we're returning a default game state
-                        Debug.Log("[Unity MCP] Returning default game state due to thread safety issues");
-                        // Log the game state using AILogger
-                        var stateLogger = new AILogger("unity-state");
-                        _ = stateLogger.Info("Game state", gameState);
+                            // Log that we're returning a default game state
+                            Debug.Log("[Unity MCP] Returning default game state due to thread safety issues");
+                            // Log the game state using AILogger
+                            var stateLogger = new AILogger("unity-state");
+                            _ = stateLogger.Info("Game state", gameState);
 
-                        responseText = $"{{\"isPlaying\":{gameState.IsPlaying.ToString().ToLower()},\"isPaused\":{gameState.IsPaused.ToString().ToLower()},\"isCompiling\":{gameState.IsCompiling.ToString().ToLower()},\"currentScene\":\"{gameState.CurrentScene}\",\"timeScale\":{gameState.TimeScale},\"frameCount\":{gameState.FrameCount},\"realtimeSinceStartup\":{gameState.RealtimeSinceStartup}}}";
-                        handled = true;
+                            responseText = $"{{\"isPlaying\":{gameState.IsPlaying.ToString().ToLower()},\"isPaused\":{gameState.IsPaused.ToString().ToLower()},\"isCompiling\":{gameState.IsCompiling.ToString().ToLower()},\"currentScene\":\"{gameState.CurrentScene}\",\"timeScale\":{gameState.TimeScale},\"frameCount\":{gameState.FrameCount},\"realtimeSinceStartup\":{gameState.RealtimeSinceStartup}}}";
+                            handled = true;
+                        }
+                        // Handle start game requests
+                        else if (request.Url.AbsolutePath == "/api/CodeExecution/start-game")
+                        {
+                            // Log that we're simulating starting the game
+                            Debug.Log("[Unity MCP] Simulating game start due to thread safety issues");
+                            // Log the game start using AILogger
+                            var startLogger = new AILogger("unity-start");
+                            _ = startLogger.Info("Game start", new { success = true });
+
+                            // Return a success response
+                            responseText = $"{{\"success\":true,\"result\":\"Game started successfully (simulated)\",\"logs\":[\"Game started successfully (simulated)\"],\"executionTime\":0}}";
+                            handled = true;
+                        }
+                        // Handle stop game requests
+                        else if (request.Url.AbsolutePath == "/api/CodeExecution/stop-game")
+                        {
+                            // Log that we're simulating stopping the game
+                            Debug.Log("[Unity MCP] Simulating game stop due to thread safety issues");
+                            // Log the game stop using AILogger
+                            var stopLogger = new AILogger("unity-stop");
+                            _ = stopLogger.Info("Game stop", new { success = true });
+
+                            // Return a success response
+                            responseText = $"{{\"success\":true,\"result\":\"Game stopped successfully (simulated)\",\"logs\":[\"Game stopped successfully (simulated)\"],\"executionTime\":0}}";
+                            handled = true;
+                        }
+
+                        // Send the response
+                        if (handled)
+                        {
+                            byte[] buffer = Encoding.UTF8.GetBytes(responseText);
+                            response.ContentLength64 = buffer.Length;
+                            response.ContentType = "application/json";
+                            response.StatusCode = 200;
+                            response.OutputStream.Write(buffer, 0, buffer.Length);
+                        }
+                        else
+                        {
+                            response.StatusCode = 404;
+                        }
+
+                        response.Close();
                     }
-                    // Handle start game requests
-                    else if (request.Url.AbsolutePath == "/api/CodeExecution/start-game")
-                    {
-                        // Log that we're simulating starting the game
-                        Debug.Log("[Unity MCP] Simulating game start due to thread safety issues");
-                        // Log the game start using AILogger
-                        var startLogger = new AILogger("unity-start");
-                        _ = startLogger.Info("Game start", new { success = true });
-
-                        // Return a success response
-                        responseText = $"{{\"success\":true,\"result\":\"Game started successfully (simulated)\",\"logs\":[\"Game started successfully (simulated)\"],\"executionTime\":0}}";
-                        handled = true;
-                    }
-                    // Handle stop game requests
-                    else if (request.Url.AbsolutePath == "/api/CodeExecution/stop-game")
-                    {
-                        // Log that we're simulating stopping the game
-                        Debug.Log("[Unity MCP] Simulating game stop due to thread safety issues");
-                        // Log the game stop using AILogger
-                        var stopLogger = new AILogger("unity-stop");
-                        _ = stopLogger.Info("Game stop", new { success = true });
-
-                        // Return a success response
-                        responseText = $"{{\"success\":true,\"result\":\"Game stopped successfully (simulated)\",\"logs\":[\"Game stopped successfully (simulated)\"],\"executionTime\":0}}";
-                        handled = true;
-                    }
-
-                    // Send the response
-                    if (handled)
-                    {
-                        byte[] buffer = Encoding.UTF8.GetBytes(responseText);
-                        response.ContentLength64 = buffer.Length;
-                        response.ContentType = "application/json";
-                        response.StatusCode = 200;
-                        response.OutputStream.Write(buffer, 0, buffer.Length);
-                    }
-                    else
-                    {
-                        response.StatusCode = 404;
-                    }
-
-                    response.Close();
+                catch (OperationCanceledException)
+                {
+                    // This is expected when cancellation is requested
+                    Debug.Log("[Unity MCP] HTTP server thread was cancelled");
+                    break;
+                }
+                catch (ThreadAbortException)
+                {
+                    // This is expected when Unity is shutting down
+                    Debug.Log("[Unity MCP] HTTP server thread was aborted");
+                    break;
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogError($"[Unity MCP] Error handling HTTP request: {ex.Message}");
+                    // Only log the error if we're not being cancelled
+                    if (!cancellationToken.IsCancellationRequested)
+                    {
+                        Debug.LogError($"[Unity MCP] Error handling HTTP request: {ex.Message}");
+                    }
+
+                    // Add a small delay to prevent CPU spinning in case of repeated errors
+                    Thread.Sleep(100);
                 }
             }
+
+            Debug.Log("[Unity MCP] HTTP server thread exiting");
         }
 
         /// <summary>
@@ -205,6 +240,12 @@ namespace UnityMCP.Client.Editor
 
             try
             {
+                // Signal cancellation to stop the thread gracefully
+                if (cancellationTokenSource != null)
+                {
+                    cancellationTokenSource.Cancel();
+                }
+
                 // Stop the HTTP listener
                 if (httpListener != null)
                 {
@@ -218,6 +259,13 @@ namespace UnityMCP.Client.Editor
                 {
                     serverThread.Join(5000); // Wait up to 5 seconds
                     serverThread = null;
+                }
+
+                // Dispose the cancellation token source
+                if (cancellationTokenSource != null)
+                {
+                    cancellationTokenSource.Dispose();
+                    cancellationTokenSource = null;
                 }
 
                 // Set the flag
