@@ -63,6 +63,40 @@ namespace UnityMCP.Client.Services
         }
 
         /// <summary>
+        /// Execute a query in Unity (mock implementation)
+        /// </summary>
+        /// <param name="query">The query to execute</param>
+        /// <param name="timeout">Optional timeout in milliseconds</param>
+        /// <returns>The execution result</returns>
+        public async Task<CodeExecutionResult> QueryAsync(string query, int timeout = 1000)
+        {
+            // Simulate execution delay
+            int executionTime = _random.Next(10, 200);
+            await Task.Delay(executionTime);
+
+            try
+            {
+                // For a query, we just wrap it in a return statement to get the result
+                string code = $"return {query};";
+
+                // Use the existing code execution method
+                return await ExecuteCodeAsync(code, timeout);
+            }
+            catch (Exception ex)
+            {
+                _logService.LogError("Error executing query", ex);
+
+                return new CodeExecutionResult
+                {
+                    Success = false,
+                    Error = $"Error executing query: {ex.Message}",
+                    Logs = new List<string> { $"[MOCK] Error: {ex.Message}" },
+                    ExecutionTime = executionTime
+                };
+            }
+        }
+
+        /// <summary>
         /// Check if the code execution service is available
         /// </summary>
         /// <returns>True if the service is available, false otherwise</returns>

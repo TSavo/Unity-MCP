@@ -48,6 +48,28 @@ namespace UnityMCP.Client.Controllers
         }
 
         /// <summary>
+        /// Execute a query
+        /// </summary>
+        /// <param name="request">The query request</param>
+        /// <returns>The execution result</returns>
+        [HttpPost("query")]
+        [ProducesResponseType(typeof(CodeExecutionResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> ExecuteQuery([FromBody] QueryRequest request)
+        {
+            if (string.IsNullOrWhiteSpace(request.Query))
+            {
+                _logService.Log("Query is required", LogSeverity.Warning);
+                return BadRequest("Query is required");
+            }
+
+            var result = await _codeExecutionService.QueryAsync(request.Query, request.Timeout);
+
+            return Ok(result);
+        }
+
+        /// <summary>
         /// Get environment information
         /// </summary>
         /// <returns>Environment information</returns>

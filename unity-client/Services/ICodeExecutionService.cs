@@ -14,13 +14,21 @@ namespace UnityMCP.Client.Services
         /// <param name="timeout">Optional timeout in milliseconds</param>
         /// <returns>The execution result</returns>
         Task<CodeExecutionResult> ExecuteCodeAsync(string code, int timeout = 1000);
-        
+
+        /// <summary>
+        /// Execute a query in Unity
+        /// </summary>
+        /// <param name="query">The query to execute</param>
+        /// <param name="timeout">Optional timeout in milliseconds</param>
+        /// <returns>The execution result</returns>
+        Task<CodeExecutionResult> QueryAsync(string query, int timeout = 1000);
+
         /// <summary>
         /// Check if the code execution service is available
         /// </summary>
         /// <returns>True if the service is available, false otherwise</returns>
         Task<bool> IsAvailableAsync();
-        
+
         /// <summary>
         /// Get information about the execution environment
         /// </summary>
