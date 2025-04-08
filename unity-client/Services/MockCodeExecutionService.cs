@@ -1,4 +1,5 @@
 using UnityMCP.Client.Models;
+using UnityMCP.Client.Editor;
 
 namespace UnityMCP.Client.Services
 {
@@ -117,6 +118,54 @@ namespace UnityMCP.Client.Services
                 Platform = "Windows",
                 IsEditor = true,
                 SceneObjects = new List<string> { "Main Camera", "Directional Light", "Player" }
+            });
+        }
+
+        /// <summary>
+        /// Get the current game state
+        /// </summary>
+        /// <returns>The current game state</returns>
+        public Task<GameState> GetGameStateAsync()
+        {
+            return Task.FromResult(new GameState
+            {
+                IsPlaying = false,
+                IsPaused = false,
+                IsCompiling = false,
+                CurrentScene = "SampleScene",
+                TimeScale = 1.0f,
+                FrameCount = 0,
+                RealtimeSinceStartup = 0.0f
+            });
+        }
+
+        /// <summary>
+        /// Start the game (enter play mode)
+        /// </summary>
+        /// <returns>Success or failure result</returns>
+        public Task<CodeExecutionResult> StartGameAsync()
+        {
+            return Task.FromResult(new CodeExecutionResult
+            {
+                Success = true,
+                Result = "Game started successfully (mock)",
+                Logs = new List<string> { "[MOCK] Game started successfully" },
+                ExecutionTime = 0
+            });
+        }
+
+        /// <summary>
+        /// Stop the game (exit play mode)
+        /// </summary>
+        /// <returns>Success or failure result</returns>
+        public Task<CodeExecutionResult> StopGameAsync()
+        {
+            return Task.FromResult(new CodeExecutionResult
+            {
+                Success = true,
+                Result = "Game stopped successfully (mock)",
+                Logs = new List<string> { "[MOCK] Game stopped successfully" },
+                ExecutionTime = 0
             });
         }
 

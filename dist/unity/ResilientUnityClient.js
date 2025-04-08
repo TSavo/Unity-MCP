@@ -54,6 +54,24 @@ class ResilientUnityClient {
         return this.withRetry(() => this.client.getEnvironmentInfo());
     }
     /**
+     * Get game state with retry logic
+     */
+    async getGameState() {
+        return this.withRetry(() => this.client.getGameState());
+    }
+    /**
+     * Start game with retry logic
+     */
+    async startGame() {
+        return this.withRetry(() => this.client.startGame());
+    }
+    /**
+     * Stop game with retry logic
+     */
+    async stopGame() {
+        return this.withRetry(() => this.client.stopGame());
+    }
+    /**
      * Execute a function with retry logic
      * @param fn Function to execute
      * @param validateFn Optional function to validate the result

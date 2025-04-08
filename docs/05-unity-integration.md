@@ -408,7 +408,25 @@ Content-Type: application/json
 }
 ```
 
-### Response Format
+### Get Game State
+
+```http
+GET /api/CodeExecution/game-state
+```
+
+### Start Game
+
+```http
+POST /api/CodeExecution/start-game
+```
+
+### Stop Game
+
+```http
+POST /api/CodeExecution/stop-game
+```
+
+### Response Format for Code Execution and Game Control
 
 ```json
 {
@@ -421,6 +439,20 @@ Content-Type: application/json
   "error": null,
   "logs": ["Log message 1", "Log message 2"],
   "executionTime": 123
+}
+```
+
+### Game State Response Format
+
+```json
+{
+  "isPlaying": false,
+  "isPaused": false,
+  "isCompiling": false,
+  "currentScene": "SampleScene",
+  "timeScale": 1.0,
+  "frameCount": 0,
+  "realtimeSinceStartup": 0.0
 }
 ```
 

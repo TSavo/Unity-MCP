@@ -1,4 +1,5 @@
 using UnityMCP.Client.Models;
+using UnityMCP.Client.Editor;
 
 namespace UnityMCP.Client.Services
 {
@@ -34,5 +35,23 @@ namespace UnityMCP.Client.Services
         /// </summary>
         /// <returns>Environment information</returns>
         Task<EnvironmentInfo> GetEnvironmentInfoAsync();
+
+        /// <summary>
+        /// Get the current game state
+        /// </summary>
+        /// <returns>The current game state</returns>
+        Task<GameState> GetGameStateAsync();
+
+        /// <summary>
+        /// Start the game (enter play mode)
+        /// </summary>
+        /// <returns>Success or failure result</returns>
+        Task<CodeExecutionResult> StartGameAsync();
+
+        /// <summary>
+        /// Stop the game (exit play mode)
+        /// </summary>
+        /// <returns>Success or failure result</returns>
+        Task<CodeExecutionResult> StopGameAsync();
     }
 }

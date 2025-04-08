@@ -1,4 +1,4 @@
-import { IUnityClient, UnityExecutionResult, UnityEnvironmentInfo } from './types';
+import { IUnityClient, UnityExecutionResult, UnityEnvironmentInfo, GameState } from './types';
 import logger from '../utils/logger';
 
 /**
@@ -53,6 +53,27 @@ export class MockUnityClient implements IUnityClient {
    */
   public setFailureRate(rate: number): void {
     this.failureRate = Math.max(0, Math.min(1, rate));
+  }
+
+  /**
+   * Simulate execution with delay and potential failure
+   * @returns A promise that resolves when the execution is complete
+   */
+  private async simulateExecution(): Promise<void> {
+    // Simulate execution delay
+    if (this.executionDelay > 0) {
+      await new Promise(resolve => setTimeout(resolve, this.executionDelay));
+    }
+
+    // Check if we should simulate a failure
+    if (Math.random() < this.failureRate) {
+      throw new Error('Simulated failure');
+    }
+
+    // Check if we're connected
+    if (!this.connected) {
+      throw new Error('Unity is not connected');
+    }
   }
 
   /**
@@ -185,6 +206,69 @@ export class MockUnityClient implements IUnityClient {
     }
 
     return { ...this.mockEnvironmentInfo };
+  }
+
+  /**
+   * Get the current game state (mock implementation)
+   */
+  public async getGameState(): Promise<GameState> {
+    logger.debug('[MOCK] Getting game state');
+
+    if (!this.connected) {
+      throw new Error('Unity is not connected');
+    }
+
+    await this.simulateExecution();
+
+    return {
+      isPlaying: false,
+      isPaused: false,
+      isCompiling: false,
+      currentScene: 'SampleScene',
+      timeScale: 1.0,
+      frameCount: 0,
+      realtimeSinceStartup: 0.0
+    };
+  }
+
+  /**
+   * Start the game (mock implementation)
+   */
+  public async startGame(): Promise<UnityExecutionResult> {
+    logger.debug('[MOCK] Starting game');
+
+    if (!this.connected) {
+      throw new Error('Unity is not connected');
+    }
+
+    await this.simulateExecution();
+
+    return {
+      success: true,
+      result: 'Game started successfully (mock)',
+      logs: ['[MOCK] Game started successfully'],
+      executionTime: this.executionDelay
+    };
+  }
+
+  /**
+   * Stop the game (mock implementation)
+   */
+  public async stopGame(): Promise<UnityExecutionResult> {
+    logger.debug('[MOCK] Stopping game');
+
+    if (!this.connected) {
+      throw new Error('Unity is not connected');
+    }
+
+    await this.simulateExecution();
+
+    return {
+      success: true,
+      result: 'Game stopped successfully (mock)',
+      logs: ['[MOCK] Game stopped successfully'],
+      executionTime: this.executionDelay
+    };
   }
 
   /**

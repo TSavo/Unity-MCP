@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  unity-client:
+    build:
+      context: .
+      dockerfile: Dockerfile.unity-client
+    container_name: unity-client
+    ports:
+      - "8081:8081"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    restart: unless-stopped
+
+  # Note: The MCP STDIO client is not included in Docker Compose
+  # because Claude needs to run it directly, not through Docker

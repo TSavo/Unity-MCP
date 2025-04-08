@@ -168,6 +168,45 @@ The MCP STDIO client provides the following tools:
    }
    ```
 
+5. **get_state**: Get the current game state
+   ```json
+   {
+     "jsonrpc": "2.0",
+     "id": "6",
+     "method": "tools/call",
+     "params": {
+       "name": "get_state",
+       "arguments": {}
+     }
+   }
+   ```
+
+6. **start_game**: Start the game (enter play mode)
+   ```json
+   {
+     "jsonrpc": "2.0",
+     "id": "7",
+     "method": "tools/call",
+     "params": {
+       "name": "start_game",
+       "arguments": {}
+     }
+   }
+   ```
+
+7. **stop_game**: Stop the game (exit play mode)
+   ```json
+   {
+     "jsonrpc": "2.0",
+     "id": "8",
+     "method": "tools/call",
+     "params": {
+       "name": "stop_game",
+       "arguments": {}
+     }
+   }
+   ```
+
 ## Troubleshooting
 
 If you encounter issues with the MCP STDIO client, check the log file for error messages. The client will also write critical errors to stderr during startup.

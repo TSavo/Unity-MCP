@@ -5,55 +5,64 @@ using UnityMCP.Client.Config;
 using UnityMCP.Client.DI;
 using UnityMCP.Client.Middleware;
 
-var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
+namespace UnityMCP.Client
 {
-    c.SwaggerDoc("v1", new OpenApiInfo
+    public class Program
     {
-        Title = "Unity MCP Client API",
-        Version = "v1",
-        Description = "API for executing code in Unity and communicating with the MCP server"
-    });
-});
+        public static void Main(string[] args)
+        {
+            var builder = WebApplication.CreateBuilder(args);
 
-// Configure AppConfig from appsettings.json
-var appConfig = new AppConfig();
-builder.Configuration.GetSection("AppConfig").Bind(appConfig);
-builder.Services.AddSingleton(appConfig);
+            // Add services to the container
+            builder.Services.AddControllers();
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Title = "Unity MCP Client API",
+                    Version = "v1",
+                    Description = "API for executing code in Unity and communicating with the MCP server"
+                });
+            });
 
-// Use Autofac as the DI container
-builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
-builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
-{
-    // Register modules
-    containerBuilder.RegisterModule(new ServiceModule(appConfig));
-});
+            // Configure AppConfig from appsettings.json
+            var appConfig = new AppConfig();
+            builder.Configuration.GetSection("AppConfig").Bind(appConfig);
+            builder.Services.AddSingleton(appConfig);
 
-var app = builder.Build();
+            // Use Autofac as the DI container
+            builder.Host.UseServiceProviderFactory(new AutofacServiceProviderFactory());
+            builder.Host.ConfigureContainer<ContainerBuilder>(containerBuilder =>
+            {
+                // Register modules
+                containerBuilder.RegisterModule(new ServiceModule(appConfig));
+            });
 
-// Configure middleware
-app.UseMiddleware<ExceptionHandlingMiddleware>();
+            var app = builder.Build();
 
-// Configure the HTTP request pipeline
-// Always enable Swagger in this project for testing
-app.UseSwagger();
-app.UseSwaggerUI(options =>
-{
-    options.SwaggerEndpoint("/swagger/v1/swagger.json", "Unity MCP Client API v1");
-    options.RoutePrefix = "swagger";
-});
+            // Configure middleware
+            app.UseMiddleware<ExceptionHandlingMiddleware>();
 
-app.UseHttpsRedirection();
-app.UseAuthorization();
-app.MapControllers();
+            // Configure the HTTP request pipeline
+            // Always enable Swagger in this project for testing
+            app.UseSwagger();
+            app.UseSwaggerUI(options =>
+            {
+                options.SwaggerEndpoint("/swagger/v1/swagger.json", "Unity MCP Client API v1");
+                options.RoutePrefix = "swagger";
+            });
 
-// Configure routes
-app.MapGet("/ping", () => Results.Ok("pong"))
-    .WithName("Ping")
-    .WithOpenApi();
+            app.UseHttpsRedirection();
+            app.UseAuthorization();
+            app.MapControllers();
 
-app.Run();
+            // Configure routes
+            app.MapGet("/ping", () => Results.Ok("pong"))
+                .WithName("Ping")
+                .WithOpenApi();
+
+            app.Run();
+        }
+    }
+}

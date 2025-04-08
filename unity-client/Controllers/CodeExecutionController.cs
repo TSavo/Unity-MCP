@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using UnityMCP.Client.Models;
 using UnityMCP.Client.Services;
+using UnityMCP.Client.Editor;
 
 namespace UnityMCP.Client.Controllers
 {
@@ -97,6 +98,75 @@ namespace UnityMCP.Client.Controllers
             _logService.Log("Status endpoint called", LogSeverity.Info);
 
             return Ok("Code execution service is running with hot reload enabled!");
+        }
+
+        /// <summary>
+        /// Get the current game state
+        /// </summary>
+        /// <returns>The current game state</returns>
+        [HttpGet("game-state")]
+        [ProducesResponseType(typeof(GameState), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetGameState()
+        {
+            _logService.Log("Get game state endpoint called", LogSeverity.Info);
+
+            try
+            {
+                var gameState = await _codeExecutionService.GetGameStateAsync();
+                return Ok(gameState);
+            }
+            catch (Exception ex)
+            {
+                _logService.LogError($"Error getting game state: {ex.Message}", ex);
+                return StatusCode(500, $"Error getting game state: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Start the game (enter play mode)
+        /// </summary>
+        /// <returns>Success or failure result</returns>
+        [HttpPost("start-game")]
+        [ProducesResponseType(typeof(CodeExecutionResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> StartGame()
+        {
+            _logService.Log("Start game endpoint called", LogSeverity.Info);
+
+            try
+            {
+                var result = await _codeExecutionService.StartGameAsync();
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logService.LogError($"Error starting game: {ex.Message}", ex);
+                return StatusCode(500, $"Error starting game: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Stop the game (exit play mode)
+        /// </summary>
+        /// <returns>Success or failure result</returns>
+        [HttpPost("stop-game")]
+        [ProducesResponseType(typeof(CodeExecutionResult), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> StopGame()
+        {
+            _logService.Log("Stop game endpoint called", LogSeverity.Info);
+
+            try
+            {
+                var result = await _codeExecutionService.StopGameAsync();
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logService.LogError($"Error stopping game: {ex.Message}", ex);
+                return StatusCode(500, $"Error stopping game: {ex.Message}");
+            }
         }
     }
 }

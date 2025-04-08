@@ -135,5 +135,81 @@ class UnityClient {
             throw new Error(`Failed to get Unity environment info: ${error instanceof Error ? error.message : String(error)}`);
         }
     }
+    /**
+     * Get the current game state
+     * @returns A promise that resolves with the game state
+     */
+    async getGameState() {
+        try {
+            logger_1.default.debug('Getting game state from Unity');
+            const startTime = Date.now();
+            const response = await this.axios.get('/api/CodeExecution/game-state');
+            const executionTime = Date.now() - startTime;
+            logger_1.default.debug(`Unity game state query completed in ${executionTime}ms`);
+            return response.data;
+        }
+        catch (error) {
+            logger_1.default.error(`Error getting game state from Unity: ${error}`);
+            throw new Error(`Failed to get game state: ${error.message || String(error)}`);
+        }
+    }
+    /**
+     * Start the game (enter play mode)
+     * @returns A promise that resolves with the execution result
+     */
+    async startGame() {
+        try {
+            logger_1.default.debug('Starting game in Unity');
+            const startTime = Date.now();
+            const response = await this.axios.post('/api/CodeExecution/start-game');
+            const executionTime = Date.now() - startTime;
+            logger_1.default.debug(`Unity start game completed in ${executionTime}ms`);
+            return {
+                success: response.data.success,
+                result: response.data.result,
+                error: response.data.error,
+                logs: response.data.logs,
+                executionTime
+            };
+        }
+        catch (error) {
+            logger_1.default.error(`Error starting game in Unity: ${error}`);
+            return {
+                success: false,
+                error: `Failed to start game: ${error.message || String(error)}`,
+                logs: [],
+                executionTime: 0
+            };
+        }
+    }
+    /**
+     * Stop the game (exit play mode)
+     * @returns A promise that resolves with the execution result
+     */
+    async stopGame() {
+        try {
+            logger_1.default.debug('Stopping game in Unity');
+            const startTime = Date.now();
+            const response = await this.axios.post('/api/CodeExecution/stop-game');
+            const executionTime = Date.now() - startTime;
+            logger_1.default.debug(`Unity stop game completed in ${executionTime}ms`);
+            return {
+                success: response.data.success,
+                result: response.data.result,
+                error: response.data.error,
+                logs: response.data.logs,
+                executionTime
+            };
+        }
+        catch (error) {
+            logger_1.default.error(`Error stopping game in Unity: ${error}`);
+            return {
+                success: false,
+                error: `Failed to stop game: ${error.message || String(error)}`,
+                logs: [],
+                executionTime: 0
+            };
+        }
+    }
 }
 exports.UnityClient = UnityClient;

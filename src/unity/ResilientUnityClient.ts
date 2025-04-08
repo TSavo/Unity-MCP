@@ -1,4 +1,4 @@
-import { IUnityClient, UnityExecutionResult, UnityEnvironmentInfo, ResilientUnityClientOptions } from './types';
+import { IUnityClient, UnityExecutionResult, UnityEnvironmentInfo, GameState, ResilientUnityClientOptions } from './types';
 import { UnityClient } from './UnityClient';
 import logger from '../utils/logger';
 
@@ -61,6 +61,27 @@ export class ResilientUnityClient implements IUnityClient {
    */
   public async getEnvironmentInfo(): Promise<UnityEnvironmentInfo> {
     return this.withRetry(() => this.client.getEnvironmentInfo());
+  }
+
+  /**
+   * Get game state with retry logic
+   */
+  public async getGameState(): Promise<GameState> {
+    return this.withRetry(() => this.client.getGameState());
+  }
+
+  /**
+   * Start game with retry logic
+   */
+  public async startGame(): Promise<UnityExecutionResult> {
+    return this.withRetry(() => this.client.startGame());
+  }
+
+  /**
+   * Stop game with retry logic
+   */
+  public async stopGame(): Promise<UnityExecutionResult> {
+    return this.withRetry(() => this.client.stopGame());
   }
 
   /**

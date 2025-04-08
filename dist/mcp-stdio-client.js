@@ -256,6 +256,99 @@ server.tool("get_log_by_name", {
         };
     }
 });
+// Add get_state tool
+server.tool("get_state", {}, async () => {
+    try {
+        logger.info('Getting game state from Unity');
+        const logName = `unity-state-${Date.now()}`;
+        // Get game state from Unity
+        const gameState = await unityClient.getGameState();
+        // Store the result in AILogger
+        await storeResultInAILogger(logName, gameState);
+        return {
+            content: [{
+                    type: "text",
+                    text: JSON.stringify({
+                        status: "success",
+                        logName,
+                        result: gameState
+                    }, null, 2)
+                }]
+        };
+    }
+    catch (error) {
+        logger.error(`Error getting game state from Unity: ${error}`);
+        return {
+            content: [{
+                    type: "text",
+                    text: `Error: ${error.message || String(error)}`
+                }],
+            isError: true
+        };
+    }
+});
+// Add start_game tool
+server.tool("start_game", {}, async () => {
+    try {
+        logger.info('Starting game in Unity');
+        const logName = `unity-start-${Date.now()}`;
+        // Start the game in Unity
+        const result = await unityClient.startGame();
+        // Store the result in AILogger
+        await storeResultInAILogger(logName, result);
+        return {
+            content: [{
+                    type: "text",
+                    text: JSON.stringify({
+                        status: "success",
+                        logName,
+                        result: result
+                    }, null, 2)
+                }]
+        };
+    }
+    catch (error) {
+        logger.error(`Error starting game in Unity: ${error}`);
+        return {
+            content: [{
+                    type: "text",
+                    text: `Error: ${error.message || String(error)}`
+                }],
+            isError: true
+        };
+    }
+});
+// Add stop_game tool
+server.tool("stop_game", {}, async () => {
+    try {
+        logger.info('Stopping game in Unity');
+        const logName = `unity-stop-${Date.now()}`;
+        // Stop the game in Unity
+        const result = await unityClient.stopGame();
+        // Store the result in AILogger
+        await storeResultInAILogger(logName, result);
+        return {
+            content: [{
+                    type: "text",
+                    text: JSON.stringify({
+                        status: "success",
+                        logName,
+                        result: result
+                    }, null, 2)
+                }]
+        };
+    }
+    catch (error) {
+        logger.error(`Error stopping game in Unity: ${error}`);
+        return {
+            content: [{
+                    type: "text",
+                    text: `Error: ${error.message || String(error)}`
+                }],
+            isError: true
+        };
+    }
+});
 /**
  * Store a result in AILogger
  *

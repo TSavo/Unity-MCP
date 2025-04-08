@@ -55,10 +55,17 @@ namespace UnityMCP.Client.DI
                     .Named<ICodeExecutionService>("baseCodeExecutionService")
                     .SingleInstance();
             }
+            else if (_appConfig.CodeExecutionServiceType == "Editor")
+            {
+                // Register the Editor implementation
+                builder.RegisterType<EditorCodeExecutionService>()
+                    .Named<ICodeExecutionService>("baseCodeExecutionService")
+                    .SingleInstance();
+            }
             else
             {
-                // When we have a real Unity implementation, register it here
-                builder.RegisterType<MockCodeExecutionService>()
+                // Default to the Editor implementation
+                builder.RegisterType<EditorCodeExecutionService>()
                     .Named<ICodeExecutionService>("baseCodeExecutionService")
                     .SingleInstance();
             }

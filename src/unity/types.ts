@@ -25,6 +25,24 @@ export interface IUnityClient {
   checkConnection(): Promise<boolean>;
 
   /**
+   * Get the current game state
+   * @returns A promise that resolves with the game state
+   */
+  getGameState(): Promise<GameState>;
+
+  /**
+   * Start the game (enter play mode)
+   * @returns A promise that resolves with the execution result
+   */
+  startGame(): Promise<UnityExecutionResult>;
+
+  /**
+   * Stop the game (exit play mode)
+   * @returns A promise that resolves with the execution result
+   */
+  stopGame(): Promise<UnityExecutionResult>;
+
+  /**
    * Get Unity version and environment information
    * @returns A promise that resolves with Unity environment info
    */
@@ -59,6 +77,26 @@ export interface UnityEnvironmentInfo {
   isEditor: boolean;
   /** Available game objects in the scene (optional) */
   sceneObjects?: string[];
+}
+
+/**
+ * Game state information
+ */
+export interface GameState {
+  /** Whether the game is currently playing */
+  isPlaying: boolean;
+  /** Whether the game is currently paused */
+  isPaused: boolean;
+  /** Whether the editor is currently compiling */
+  isCompiling: boolean;
+  /** The name of the current scene */
+  currentScene: string;
+  /** The current time scale */
+  timeScale: number;
+  /** The current frame count */
+  frameCount: number;
+  /** The time in seconds since the start of the game */
+  realtimeSinceStartup: number;
 }
 
 /**
