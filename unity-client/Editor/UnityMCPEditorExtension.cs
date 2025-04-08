@@ -295,13 +295,19 @@ namespace UnityMCP.Client.Editor
 
                 // Create a new HTTP listener
                 httpListener = new HttpListener();
-                string prefix = $"http://localhost:{serverPort}/";
-                httpListener.Prefixes.Add(prefix);
+
+                // Add prefixes for both IPv4 and IPv6
+                string localhostPrefix = $"http://localhost:{serverPort}/";
+                string ipv4Prefix = $"http://127.0.0.1:{serverPort}/";
+
+                httpListener.Prefixes.Add(localhostPrefix);
+                httpListener.Prefixes.Add(ipv4Prefix);
+
                 httpListener.Start();
 
                 // Log the HTTP listener details
                 var setupLogger = new AILogger("unity-http-setup");
-                _ = setupLogger.Info($"HTTP listener created and started", new { port = serverPort, prefix = prefix });
+                _ = setupLogger.Info($"HTTP listener created and started", new { port = serverPort, prefixes = new[] { localhostPrefix, ipv4Prefix } });
 
                 // Start a thread to handle HTTP requests
                 serverThread = new Thread(() => HandleHttpRequests(cancellationTokenSource.Token));
