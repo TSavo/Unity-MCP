@@ -119,23 +119,121 @@ namespace UnityMCP.Client.Editor
                     // Handle game state requests
                     else if (request.Url.AbsolutePath == "/api/CodeExecution/game-state")
                     {
-                        var gameState = GetGameState();
-                        responseText = $"{{\"isPlaying\":{gameState.IsPlaying.ToString().ToLower()},\"isPaused\":{gameState.IsPaused.ToString().ToLower()},\"isCompiling\":{gameState.IsCompiling.ToString().ToLower()},\"currentScene\":\"{gameState.CurrentScene}\",\"timeScale\":{gameState.TimeScale},\"frameCount\":{gameState.FrameCount},\"realtimeSinceStartup\":{gameState.RealtimeSinceStartup}}}";
-                        handled = true;
+                        // We need to get the game state on the main thread
+                        var waitEvent = new ManualResetEvent(false);
+                        EditorGameState gameState = null;
+
+                        // Schedule the GetGameState call on the main thread
+                        EditorApplication.delayCall += () =>
+                        {
+                            try
+                            {
+                                gameState = GetGameState();
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.LogError($"[Unity MCP] Error getting game state: {ex.Message}");
+                            }
+                            finally
+                            {
+                                waitEvent.Set();
+                            }
+                        };
+
+                        // Wait for the main thread to execute the call
+                        waitEvent.WaitOne();
+
+                        if (gameState != null)
+                        {
+                            responseText = $"{{\"isPlaying\":{gameState.IsPlaying.ToString().ToLower()},\"isPaused\":{gameState.IsPaused.ToString().ToLower()},\"isCompiling\":{gameState.IsCompiling.ToString().ToLower()},\"currentScene\":\"{gameState.CurrentScene}\",\"timeScale\":{gameState.TimeScale},\"frameCount\":{gameState.FrameCount},\"realtimeSinceStartup\":{gameState.RealtimeSinceStartup}}}";
+                            handled = true;
+                        }
+                        else
+                        {
+                            responseText = $"{{\"error\":\"Failed to get game state\"}}";
+                            response.StatusCode = 500;
+                            handled = true;
+                        }
                     }
                     // Handle start game requests
                     else if (request.Url.AbsolutePath == "/api/CodeExecution/start-game")
                     {
-                        StartGame();
-                        responseText = $"{{\"success\":true,\"result\":\"Game started successfully\",\"logs\":[\"Game started successfully\"],\"executionTime\":0}}";
-                        handled = true;
+                        // We need to start the game on the main thread
+                        var waitEvent = new ManualResetEvent(false);
+                        bool success = false;
+
+                        // Schedule the StartGame call on the main thread
+                        EditorApplication.delayCall += () =>
+                        {
+                            try
+                            {
+                                StartGame();
+                                success = true;
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.LogError($"[Unity MCP] Error starting game: {ex.Message}");
+                            }
+                            finally
+                            {
+                                waitEvent.Set();
+                            }
+                        };
+
+                        // Wait for the main thread to execute the call
+                        waitEvent.WaitOne();
+
+                        if (success)
+                        {
+                            responseText = $"{{\"success\":true,\"result\":\"Game started successfully\",\"logs\":[\"Game started successfully\"],\"executionTime\":0}}";
+                            handled = true;
+                        }
+                        else
+                        {
+                            responseText = $"{{\"error\":\"Failed to start game\"}}";
+                            response.StatusCode = 500;
+                            handled = true;
+                        }
                     }
                     // Handle stop game requests
                     else if (request.Url.AbsolutePath == "/api/CodeExecution/stop-game")
                     {
-                        StopGame();
-                        responseText = $"{{\"success\":true,\"result\":\"Game stopped successfully\",\"logs\":[\"Game stopped successfully\"],\"executionTime\":0}}";
-                        handled = true;
+                        // We need to stop the game on the main thread
+                        var waitEvent = new ManualResetEvent(false);
+                        bool success = false;
+
+                        // Schedule the StopGame call on the main thread
+                        EditorApplication.delayCall += () =>
+                        {
+                            try
+                            {
+                                StopGame();
+                                success = true;
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.LogError($"[Unity MCP] Error stopping game: {ex.Message}");
+                            }
+                            finally
+                            {
+                                waitEvent.Set();
+                            }
+                        };
+
+                        // Wait for the main thread to execute the call
+                        waitEvent.WaitOne();
+
+                        if (success)
+                        {
+                            responseText = $"{{\"success\":true,\"result\":\"Game stopped successfully\",\"logs\":[\"Game stopped successfully\"],\"executionTime\":0}}";
+                            handled = true;
+                        }
+                        else
+                        {
+                            responseText = $"{{\"error\":\"Failed to stop game\"}}";
+                            response.StatusCode = 500;
+                            handled = true;
+                        }
                     }
 
                     // Send the response
