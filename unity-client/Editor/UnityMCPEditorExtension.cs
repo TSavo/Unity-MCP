@@ -398,208 +398,32 @@ namespace UnityMCP.Client.Editor
             {
                 try
                 {
+                    // Get the context directly - this is a blocking call
+                    var context = httpListener.GetContext();
+                    var request = context.Request;
+                    var response = context.Response;
 
+                    // Log the request
+                    Debug.Log($"[Unity MCP] Received request: {request.HttpMethod} {request.Url.AbsolutePath}");
 
-                    // Create a task to get the context with a timeout
-                    var contextTask = Task.Run(() =>
+                    // Super simple response for all requests
+                    string responseText = "{ \"success\": true, \"message\": \"Hello from Unity MCP!\" }";
+
+                    // Special case for ping
+                    if (request.Url.AbsolutePath == "/ping")
                     {
-                        return httpListener.GetContext();
-                    });
-
-                    // Wait for the task to complete or for cancellation
-                    if (Task.WaitAny(new[] { contextTask }, 1000, cancellationToken) == 0)
-                    {
-                        // Task completed successfully
-                        var context = contextTask.Result;
-                        var request = context.Request;
-                        var response = context.Response;
-
-                        // Log the request
-                        _ = debugLogger.Info($"Received request: {request.HttpMethod} {request.Url.AbsolutePath}");
-
-                        // Handle the request
-                        string responseText = "";
-                        bool handled = false;
-
-                        // Handle ping requests
-                        if (request.Url.AbsolutePath == "/ping")
-                        {
-                            _ = debugLogger.Info("Handling ping request");
-                            responseText = "pong";
-                            handled = true;
-                            _ = debugLogger.Info("Ping request handled");
-                        }
-                        // Handle game state requests
-                        else if (request.Url.AbsolutePath == "/api/CodeExecution/game-state")
-                        {
-                            _ = debugLogger.Info("Handling game state request");
-
-                            // Create a simple game state directly
-                            // This avoids the thread safety issues
-                            var gameState = new EditorGameState
-                            {
-                                IsPlaying = false, // We'll set this to a default value
-                                IsPaused = false,
-                                IsCompiling = false,
-                                CurrentScene = "SampleScene",
-                                TimeScale = 1.0f,
-                                FrameCount = 0,
-                                RealtimeSinceStartup = 0.0f
-                            };
-
-                            // Log that we're returning a default game state
-                            Debug.Log("[Unity MCP] Returning default game state");
-                            _ = debugLogger.Info("Created game state object");
-
-                            // Create a log entry for the AI
-                            var logEntry = new
-                            {
-                                result = new
-                                {
-                                    isPlaying = gameState.IsPlaying,
-                                    isPaused = gameState.IsPaused,
-                                    isCompiling = gameState.IsCompiling,
-                                    currentScene = gameState.CurrentScene,
-                                    timeScale = gameState.TimeScale,
-                                    frameCount = gameState.FrameCount,
-                                    realtimeSinceStartup = gameState.RealtimeSinceStartup
-                                },
-                                timestamp = DateTime.UtcNow
-                            };
-
-                            _ = debugLogger.Info("Created log entry");
-
-                            // Store the log entry for the AI to retrieve
-                            StoreLogEntry("unity-state-" + DateTime.UtcNow.Ticks, logEntry);
-
-                            _ = debugLogger.Info("Stored log entry");
-
-                            responseText = $"{{\"isPlaying\":{gameState.IsPlaying.ToString().ToLower()},\"isPaused\":{gameState.IsPaused.ToString().ToLower()},\"isCompiling\":{gameState.IsCompiling.ToString().ToLower()},\"currentScene\":\"{gameState.CurrentScene}\",\"timeScale\":{gameState.TimeScale},\"frameCount\":{gameState.FrameCount},\"realtimeSinceStartup\":{gameState.RealtimeSinceStartup}}}";
-                            handled = true;
-                        }
-                        // Handle start game requests
-                        else if (request.Url.AbsolutePath == "/api/CodeExecution/start-game" && request.HttpMethod == "POST")
-                        {
-                            try
-                            {
-                                // Log that we're handling a start game request
-                                Debug.Log("[Unity MCP] Handling start game request");
-                                _ = debugLogger.Info("Handling start game request");
-
-                                // We need to call StartGame on the main thread
-                                // For now, we'll just simulate it
-                                bool success = true;
-                                string result = "Game started successfully (simulated)";
-                                string[] logs = new[] { "Game started successfully (simulated)" };
-
-                                // Create a log entry for the AI
-                                var logEntry = new
-                                {
-                                    result = new
-                                    {
-                                        success = success,
-                                        result = result,
-                                        logs = logs,
-                                        executionTime = 2
-                                    },
-                                    timestamp = DateTime.UtcNow
-                                };
-
-                                // Store the log entry for the AI to retrieve
-                                string logName = "unity-start-" + DateTime.UtcNow.Ticks;
-                                StoreLogEntry(logName, logEntry);
-                                _ = debugLogger.Info($"Stored log entry: {logName}");
-
-                                // Return a success response
-                                responseText = $"{{\"success\":{success.ToString().ToLower()},\"result\":\"{result}\",\"logs\":[\"Game started successfully (simulated)\"],\"executionTime\":0}}";
-                                handled = true;
-                                _ = debugLogger.Info("Start game request handled successfully");
-                            }
-                            catch (Exception ex)
-                            {
-                                // Log the error
-                                Debug.LogError($"[Unity MCP] Error handling start game request: {ex.Message}");
-                                _ = debugLogger.Error($"Error handling start game request: {ex.Message}", new { stackTrace = ex.StackTrace });
-
-                                // Return an error response
-                                responseText = $"{{\"success\":false,\"error\":\"Error handling start game request: {ex.Message}\"}}";
-                                handled = true;
-                            }
-                        }
-                        // Handle stop game requests
-                        else if (request.Url.AbsolutePath == "/api/CodeExecution/stop-game" && request.HttpMethod == "POST")
-                        {
-                            try
-                            {
-                                // Log that we're handling a stop game request
-                                Debug.Log("[Unity MCP] Handling stop game request");
-                                _ = debugLogger.Info("Handling stop game request");
-
-                                // We need to call StopGame on the main thread
-                                // For now, we'll just simulate it
-                                bool success = true;
-                                string result = "Game stopped successfully (simulated)";
-                                string[] logs = new[] { "Game stopped successfully (simulated)" };
-
-                                // Create a log entry for the AI
-                                var logEntry = new
-                                {
-                                    result = new
-                                    {
-                                        success = success,
-                                        result = result,
-                                        logs = logs,
-                                        executionTime = 2
-                                    },
-                                    timestamp = DateTime.UtcNow
-                                };
-
-                                // Store the log entry for the AI to retrieve
-                                string logName = "unity-stop-" + DateTime.UtcNow.Ticks;
-                                StoreLogEntry(logName, logEntry);
-                                _ = debugLogger.Info($"Stored log entry: {logName}");
-
-                                // Return a success response
-                                responseText = $"{{\"success\":{success.ToString().ToLower()},\"result\":\"{result}\",\"logs\":[\"Game stopped successfully (simulated)\"],\"executionTime\":0}}";
-                                handled = true;
-                                _ = debugLogger.Info("Stop game request handled successfully");
-                            }
-                            catch (Exception ex)
-                            {
-                                // Log the error
-                                Debug.LogError($"[Unity MCP] Error handling stop game request: {ex.Message}");
-                                _ = debugLogger.Error($"Error handling stop game request: {ex.Message}", new { stackTrace = ex.StackTrace });
-
-                                // Return an error response
-                                responseText = $"{{\"success\":false,\"error\":\"Error handling stop game request: {ex.Message}\"}}";
-                                handled = true;
-                            }
-                        }
-
-                        // Send the response
-                        // Write the response
-                        _ = debugLogger.Info("Writing response");
-                        if (handled)
-                        {
-                            _ = debugLogger.Info($"Response: {responseText}");
-                            byte[] buffer = Encoding.UTF8.GetBytes(responseText);
-                            response.ContentLength64 = buffer.Length;
-                            response.ContentType = "application/json";
-                            response.StatusCode = 200;
-                            _ = debugLogger.Info("Writing to output stream");
-                            response.OutputStream.Write(buffer, 0, buffer.Length);
-                            _ = debugLogger.Info("Wrote to output stream");
-                        }
-                        else
-                        {
-                            _ = debugLogger.Info("Request not handled, returning 404");
-                            response.StatusCode = 404;
-                        }
-
-                        _ = debugLogger.Info("Closing response");
-                        response.Close();
-                        _ = debugLogger.Info("Response closed");
+                        responseText = "pong";
                     }
+
+                    // Send the response
+                    byte[] buffer = Encoding.UTF8.GetBytes(responseText);
+                    response.ContentLength64 = buffer.Length;
+                    response.ContentType = "application/json";
+                    response.StatusCode = 200;
+                    response.OutputStream.Write(buffer, 0, buffer.Length);
+                    response.Close();
+
+                    Debug.Log($"[Unity MCP] Response sent: {responseText}");
                 }
                 catch (OperationCanceledException)
                 {
