@@ -12,13 +12,13 @@ The query tool is implemented as follows:
 
 1. Claude sends a query request to the MCP STDIO Client
 2. The MCP STDIO Client forwards the request to the Unity Client's `/api/CodeExecution/query` endpoint
-3. The Unity Client wraps the query in a `return` statement (e.g., `return GameObject.Find("Player").transform.position;`)
-4. The Unity Client executes the wrapped query as C# code
+3. The Unity Client (running as an Editor extension) wraps the query in a `return` statement (e.g., `return GameObject.Find("Player").transform.position;`)
+4. The Unity Client executes the wrapped query as C# code in either Edit Mode or Play Mode
 5. The Unity Client returns the result to the MCP STDIO Client
 6. The MCP STDIO Client stores the result in AILogger
 7. The MCP STDIO Client returns the result to Claude
 
-This approach allows for a simple, intuitive syntax for querying Unity objects while leveraging the existing code execution infrastructure.
+This approach allows for a simple, intuitive syntax for querying Unity objects while leveraging the existing code execution infrastructure. Because the Unity Client is implemented as an Editor extension rather than a MonoBehaviour, it can execute queries whether the game is running or not.
 
 ## Example Usage
 
@@ -85,6 +85,7 @@ This query returns the current gravity vector.
 - The query cannot contain statements (e.g., variable declarations, loops, etc.)
 - The query must return a value
 - The query cannot modify the state of the Unity scene (use the execute_code tool for that)
+- In Edit Mode, only a subset of queries are supported (primarily scene object access)
 
 ## Best Practices
 
@@ -92,3 +93,4 @@ This query returns the current gravity vector.
 - Keep queries simple and focused
 - Use the execute_code tool for more complex operations
 - Use appropriate timeouts for queries that might take a long time to execute
+- Be aware of the differences between Edit Mode and Play Mode when querying Unity objects

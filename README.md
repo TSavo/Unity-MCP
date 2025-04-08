@@ -32,7 +32,7 @@ The Unity-MCP STDIO Client communicates directly with the Unity Client, which pr
 
 ## Deployment Options
 
-- Unity Component: A MonoBehaviour that can be added to a Unity scene
+- Unity Editor Extension: An Editor extension that persists beyond game execution cycles
 - Docker Container: A containerized version that communicates with Unity over the network
 - NPX Package: A Node.js package that can be installed and run via NPX
 

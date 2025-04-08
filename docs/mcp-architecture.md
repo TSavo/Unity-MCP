@@ -97,11 +97,12 @@ The MCP STDIO Client is a command-line interface that allows Claude to interact 
 
 ### Unity Client
 
-The Unity Client is a .NET application that executes code and queries in Unity. It provides the following functionality:
+The Unity Client is a .NET application that runs as a Unity Editor extension, allowing it to persist beyond game execution cycles. It provides the following functionality:
 
-- Execute C# code in Unity
+- Execute C# code in Unity (in both Edit Mode and Play Mode)
 - Execute queries by wrapping them in a `return` statement
 - Return results to the MCP STDIO Client
+- Persist across domain reloads and editor restarts
 
 ### AILogger
 
