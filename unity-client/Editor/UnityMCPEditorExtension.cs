@@ -165,7 +165,7 @@ namespace UnityMCP.Client.Editor
 
                 // Create the request
                 var request = WebRequest.Create($"{LogEndpoint}/{_logName}");
-                request.Method = "PATCH";
+                request.Method = "POST";
                 request.ContentType = "application/json";
 
                 // Write the data
