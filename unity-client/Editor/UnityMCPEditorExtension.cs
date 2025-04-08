@@ -239,7 +239,7 @@ namespace UnityMCP.Client.Editor
     /// <summary>
     /// Editor extension for Unity MCP integration
     /// </summary>
-    [InitializeOnLoadAttribute]
+    [InitializeOnLoad]
     public class UnityMCPEditorExtension
     {
         private static bool isInitialized = false;
