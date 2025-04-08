@@ -295,13 +295,21 @@ namespace UnityMCP.Client.Editor
 
                 // Create a new HTTP listener
                 httpListener = new HttpListener();
-                httpListener.Prefixes.Add($"http://localhost:{serverPort}/");
+                string prefix = $"http://localhost:{serverPort}/";
+                httpListener.Prefixes.Add(prefix);
                 httpListener.Start();
+
+                // Log the HTTP listener details
+                var setupLogger = new AILogger("unity-http-setup");
+                _ = setupLogger.Info($"HTTP listener created and started", new { port = serverPort, prefix = prefix });
 
                 // Start a thread to handle HTTP requests
                 serverThread = new Thread(() => HandleHttpRequests(cancellationTokenSource.Token));
                 serverThread.IsBackground = true;
                 serverThread.Start();
+
+                // Log that the thread was started
+                _ = setupLogger.Info("HTTP server thread started");
 
                 // Set the flag
                 serverStarted = true;
@@ -325,14 +333,18 @@ namespace UnityMCP.Client.Editor
         {
             // Create a debug logger
             var debugLogger = new AILogger("unity-http-debug");
-            _ = debugLogger.Info("HTTP server thread started");
+            _ = debugLogger.Info("HTTP server thread started", new { port = serverPort, isListening = httpListener?.IsListening ?? false });
+
+            // Log the HTTP listener details
+            foreach (string prefix in httpListener.Prefixes)
+            {
+                _ = debugLogger.Info($"HTTP listener prefix: {prefix}");
+            }
 
             while (httpListener != null && httpListener.IsListening && !cancellationToken.IsCancellationRequested)
             {
                 try
                 {
-                    // Log that we're waiting for a request
-                    _ = debugLogger.Info("Waiting for HTTP request");
 
                     // Create a task to get the context with a timeout
                     var contextTask = Task.Run(() => httpListener.GetContext());
