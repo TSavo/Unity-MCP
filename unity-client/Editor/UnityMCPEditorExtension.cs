@@ -8,6 +8,7 @@ using System.Threading;
 using System.Text;
 using System.IO;
 using Debug = UnityEngine.Debug;
+using UnityMCP.Client.Editor.Commands;
 
 namespace UnityMCP.Client.Editor
 {
@@ -881,21 +882,17 @@ namespace UnityMCP.Client.Editor
                 // Log the code we're executing
                 Debug.Log($"[Unity MCP] Executing code: {code}");
 
-                // For now, we'll just execute the code directly in the Unity Editor
-                // This is a simple implementation that just logs the code and returns it
+                // Parse the code into a command
+                ICommand command = CommandFactory.CreateCommand(code);
 
-                // In a real implementation, we would parse the code into a structured command
-                // and execute it safely using a command pattern or similar approach
+                // Execute the command
+                object result = command.Execute();
 
-                // For demo purposes, we'll just return the code itself
-                // This is not a real execution, but it's simple and works for demo purposes
+                // Log the result
+                Debug.Log($"[Unity MCP] Code executed successfully. Result: {result}");
 
-                // Execute the code directly in the Unity Editor
-                // This is not safe, but it's simple and works for demo purposes
-                Debug.Log($"[Unity MCP] Code executed successfully");
-
-                // Return the code itself as the result
-                return code;
+                // Return the result
+                return result;
             }
             catch (Exception ex)
             {
