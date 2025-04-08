@@ -125,9 +125,9 @@ namespace UnityMCP.Client.Services
         /// Get the current game state
         /// </summary>
         /// <returns>The current game state</returns>
-        public Task<GameState> GetGameStateAsync()
+        public Task<Models.GameState> GetGameStateAsync()
         {
-            return Task.FromResult(new GameState
+            return Task.FromResult(new Models.GameState
             {
                 IsPlaying = false,
                 IsPaused = false,

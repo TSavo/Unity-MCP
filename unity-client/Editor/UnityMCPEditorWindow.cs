@@ -1,5 +1,8 @@
 using UnityEditor;
 using UnityEngine;
+using System;
+using System.Net;
+using System.Net.Http;
 
 namespace UnityMCP.Client.Editor
 {
@@ -12,7 +15,7 @@ namespace UnityMCP.Client.Editor
         private bool serverStarted = false;
         private Vector2 scrollPosition;
         private string[] logMessages = new string[0];
-        
+
         /// <summary>
         /// Show the Unity MCP Editor Window
         /// </summary>
@@ -21,7 +24,7 @@ namespace UnityMCP.Client.Editor
         {
             GetWindow<UnityMCPEditorWindow>("Unity MCP");
         }
-        
+
         /// <summary>
         /// Called when the window is enabled
         /// </summary>
@@ -29,15 +32,41 @@ namespace UnityMCP.Client.Editor
         {
             // Load settings
             autoStartServer = EditorPrefs.GetBool("UnityMCP_AutoStartServer", true);
-            
-            // Check if server is already running
-            // In a real implementation, you would check the actual server status
-            serverStarted = false;
-            
+
+            // Check if server is already running by pinging it
+            CheckServerStatus();
+
             // Register for editor update to refresh the UI
             EditorApplication.update += OnEditorUpdate;
         }
-        
+
+        /// <summary>
+        /// Check if the server is running
+        /// </summary>
+        private void CheckServerStatus()
+        {
+            // Try to ping the server
+            try
+            {
+                // Create a web request to the server's ping endpoint
+                var request = WebRequest.Create("http://localhost:8081/ping");
+                request.Method = "GET";
+                request.Timeout = 1000; // 1 second timeout
+
+                // Get the response
+                using (var response = (HttpWebResponse)request.GetResponse())
+                {
+                    // If we get a 200 OK response, the server is running
+                    serverStarted = (response.StatusCode == HttpStatusCode.OK);
+                }
+            }
+            catch
+            {
+                // If we get an exception, the server is not running
+                serverStarted = false;
+            }
+        }
+
         /// <summary>
         /// Called when the window is disabled
         /// </summary>
@@ -46,19 +75,24 @@ namespace UnityMCP.Client.Editor
             // Unregister from editor update
             EditorApplication.update -= OnEditorUpdate;
         }
-        
+
         /// <summary>
         /// Called when the editor updates
         /// </summary>
+        private float lastCheckTime = 0f;
         private void OnEditorUpdate()
         {
-            // Check if the server status has changed
-            // In a real implementation, you would check the actual server status
-            
+            // Check the server status every 5 seconds
+            if (Time.realtimeSinceStartup - lastCheckTime > 5f)
+            {
+                CheckServerStatus();
+                lastCheckTime = Time.realtimeSinceStartup;
+            }
+
             // Repaint the window to update the UI
             Repaint();
         }
-        
+
         /// <summary>
         /// Draw the GUI
         /// </summary>
@@ -66,13 +100,13 @@ namespace UnityMCP.Client.Editor
         {
             // Server status section
             EditorGUILayout.LabelField("Unity MCP Server", EditorStyles.boldLabel);
-            
+
             EditorGUILayout.Space();
-            
+
             if (serverStarted)
             {
                 EditorGUILayout.HelpBox("Unity MCP Server is running", MessageType.Info);
-                
+
                 if (GUILayout.Button("Stop Server"))
                 {
                     UnityMCPEditorExtension.StopServer();
@@ -82,16 +116,16 @@ namespace UnityMCP.Client.Editor
             else
             {
                 EditorGUILayout.HelpBox("Unity MCP Server is not running", MessageType.Warning);
-                
+
                 if (GUILayout.Button("Start Server"))
                 {
                     UnityMCPEditorExtension.StartServer();
                     serverStarted = true;
                 }
             }
-            
+
             EditorGUILayout.Space();
-            
+
             // Auto-start setting
             bool newAutoStartServer = EditorGUILayout.Toggle("Auto-start server on editor launch", autoStartServer);
             if (newAutoStartServer != autoStartServer)
@@ -99,22 +133,22 @@ namespace UnityMCP.Client.Editor
                 autoStartServer = newAutoStartServer;
                 EditorPrefs.SetBool("UnityMCP_AutoStartServer", autoStartServer);
             }
-            
+
             EditorGUILayout.Space();
             EditorGUILayout.Separator();
-            
+
             // Game control section
             EditorGUILayout.LabelField("Game Control", EditorStyles.boldLabel);
-            
+
             EditorGUILayout.Space();
-            
+
             // Display current game state
             var gameState = UnityMCPEditorExtension.GetGameState();
             EditorGUILayout.LabelField("Current State:", gameState.IsPlaying ? "Playing" : "Stopped");
             EditorGUILayout.LabelField("Current Scene:", gameState.CurrentScene);
-            
+
             EditorGUILayout.Space();
-            
+
             // Game control buttons
             using (new EditorGUILayout.HorizontalScope())
             {
@@ -124,14 +158,14 @@ namespace UnityMCP.Client.Editor
                     UnityMCPEditorExtension.StartGame();
                 }
                 GUI.enabled = true;
-                
+
                 GUI.enabled = EditorApplication.isPlaying;
                 if (GUILayout.Button("Stop Game"))
                 {
                     UnityMCPEditorExtension.StopGame();
                 }
                 GUI.enabled = true;
-                
+
                 GUI.enabled = EditorApplication.isPlaying;
                 if (GUILayout.Button(EditorApplication.isPaused ? "Resume Game" : "Pause Game"))
                 {
@@ -139,15 +173,15 @@ namespace UnityMCP.Client.Editor
                 }
                 GUI.enabled = true;
             }
-            
+
             EditorGUILayout.Space();
             EditorGUILayout.Separator();
-            
+
             // Log section
             EditorGUILayout.LabelField("Logs", EditorStyles.boldLabel);
-            
+
             EditorGUILayout.Space();
-            
+
             // Log messages
             scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition, GUILayout.Height(150));
             foreach (var message in logMessages)
@@ -155,16 +189,16 @@ namespace UnityMCP.Client.Editor
                 EditorGUILayout.LabelField(message);
             }
             EditorGUILayout.EndScrollView();
-            
+
             EditorGUILayout.Space();
-            
+
             // Clear logs button
             if (GUILayout.Button("Clear Logs"))
             {
                 logMessages = new string[0];
             }
         }
-        
+
         /// <summary>
         /// Add a log message
         /// </summary>
@@ -175,7 +209,7 @@ namespace UnityMCP.Client.Editor
             System.Array.Copy(logMessages, newLogMessages, logMessages.Length);
             newLogMessages[logMessages.Length] = $"[{System.DateTime.Now.ToString("HH:mm:ss")}] {message}";
             logMessages = newLogMessages;
-            
+
             // Repaint the window to update the UI
             Repaint();
         }

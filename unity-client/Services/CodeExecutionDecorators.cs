@@ -68,6 +68,68 @@ namespace UnityMCP.Client.Services
         }
 
         /// <summary>
+        /// Get the game state with logging
+        /// </summary>
+        public async Task<Models.GameState> GetGameStateAsync()
+        {
+            _logService.Log("Getting game state", LogSeverity.Debug);
+
+            var startTime = DateTime.UtcNow;
+            var result = await _decorated.GetGameStateAsync();
+            var elapsed = DateTime.UtcNow - startTime;
+
+            _logService.Log($"Got game state in {elapsed.TotalMilliseconds}ms", LogSeverity.Info);
+
+            return result;
+        }
+
+        /// <summary>
+        /// Start the game with logging
+        /// </summary>
+        public async Task<CodeExecutionResult> StartGameAsync()
+        {
+            _logService.Log("Starting game", LogSeverity.Debug);
+
+            var startTime = DateTime.UtcNow;
+            var result = await _decorated.StartGameAsync();
+            var elapsed = DateTime.UtcNow - startTime;
+
+            if (result.Success)
+            {
+                _logService.Log($"Game started successfully in {elapsed.TotalMilliseconds}ms", LogSeverity.Info);
+            }
+            else
+            {
+                _logService.LogError($"Failed to start game in {elapsed.TotalMilliseconds}ms: {result.Error}");
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Stop the game with logging
+        /// </summary>
+        public async Task<CodeExecutionResult> StopGameAsync()
+        {
+            _logService.Log("Stopping game", LogSeverity.Debug);
+
+            var startTime = DateTime.UtcNow;
+            var result = await _decorated.StopGameAsync();
+            var elapsed = DateTime.UtcNow - startTime;
+
+            if (result.Success)
+            {
+                _logService.Log($"Game stopped successfully in {elapsed.TotalMilliseconds}ms", LogSeverity.Info);
+            }
+            else
+            {
+                _logService.LogError($"Failed to stop game in {elapsed.TotalMilliseconds}ms: {result.Error}");
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// Check if the service is available
         /// </summary>
         public async Task<bool> IsAvailableAsync()
@@ -219,6 +281,33 @@ namespace UnityMCP.Client.Services
         }
 
         /// <summary>
+        /// Get the game state
+        /// </summary>
+        public Task<Models.GameState> GetGameStateAsync()
+        {
+            // Game state should never be cached as it changes frequently
+            return _decorated.GetGameStateAsync();
+        }
+
+        /// <summary>
+        /// Start the game
+        /// </summary>
+        public Task<CodeExecutionResult> StartGameAsync()
+        {
+            // Starting the game should never be cached
+            return _decorated.StartGameAsync();
+        }
+
+        /// <summary>
+        /// Stop the game
+        /// </summary>
+        public Task<CodeExecutionResult> StopGameAsync()
+        {
+            // Stopping the game should never be cached
+            return _decorated.StopGameAsync();
+        }
+
+        /// <summary>
         /// Get environment info with caching
         /// </summary>
         public async Task<EnvironmentInfo> GetEnvironmentInfoAsync()
@@ -317,6 +406,33 @@ namespace UnityMCP.Client.Services
         public Task<bool> IsAvailableAsync()
         {
             return _decorated.IsAvailableAsync();
+        }
+
+        /// <summary>
+        /// Get the game state
+        /// </summary>
+        public Task<Models.GameState> GetGameStateAsync()
+        {
+            // No security checks needed for getting game state
+            return _decorated.GetGameStateAsync();
+        }
+
+        /// <summary>
+        /// Start the game
+        /// </summary>
+        public Task<CodeExecutionResult> StartGameAsync()
+        {
+            // No security checks needed for starting the game
+            return _decorated.StartGameAsync();
+        }
+
+        /// <summary>
+        /// Stop the game
+        /// </summary>
+        public Task<CodeExecutionResult> StopGameAsync()
+        {
+            // No security checks needed for stopping the game
+            return _decorated.StopGameAsync();
         }
 
         /// <summary>

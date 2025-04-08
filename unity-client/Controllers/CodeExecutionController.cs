@@ -105,7 +105,7 @@ namespace UnityMCP.Client.Controllers
         /// </summary>
         /// <returns>The current game state</returns>
         [HttpGet("game-state")]
-        [ProducesResponseType(typeof(GameState), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(Models.GameState), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> GetGameState()
         {

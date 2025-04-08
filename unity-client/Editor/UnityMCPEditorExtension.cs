@@ -3,6 +3,11 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Net;
+using System.Threading;
+using System.Text;
+using System.IO;
+using Debug = UnityEngine.Debug;
 
 namespace UnityMCP.Client.Editor
 {
@@ -15,7 +20,9 @@ namespace UnityMCP.Client.Editor
         private static bool isInitialized = false;
         private static bool autoStartServer = true;
         private static bool serverStarted = false;
-        private static System.Diagnostics.Process serverProcess;
+        private static HttpListener httpListener;
+        private static Thread serverThread;
+        private static int serverPort = 8081;
 
         /// <summary>
         /// Static constructor called on Unity Editor startup
@@ -24,10 +31,10 @@ namespace UnityMCP.Client.Editor
         {
             // Initialize when Unity Editor starts
             EditorApplication.delayCall += Initialize;
-            
+
             // Register for play mode state changes
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
-            
+
             // Make sure we clean up when the editor is closing
             EditorApplication.quitting += Shutdown;
         }
@@ -38,18 +45,18 @@ namespace UnityMCP.Client.Editor
         private static void Initialize()
         {
             if (isInitialized) return;
-            
+
             Debug.Log("[Unity MCP] Initializing Unity MCP Editor Extension");
-            
+
             // Load settings
             autoStartServer = EditorPrefs.GetBool("UnityMCP_AutoStartServer", true);
-            
+
             // Start the server if auto-start is enabled
             if (autoStartServer && !serverStarted)
             {
                 StartServer();
             }
-            
+
             isInitialized = true;
         }
 
@@ -59,21 +66,98 @@ namespace UnityMCP.Client.Editor
         public static void StartServer()
         {
             if (serverStarted) return;
-            
+
             Debug.Log("[Unity MCP] Starting Unity MCP server");
-            
+
             try
             {
-                // Start the server process
-                // Note: In a real implementation, you would start the actual server process here
-                // For now, we'll just set the flag
+                // Create a new HTTP listener
+                httpListener = new HttpListener();
+                httpListener.Prefixes.Add($"http://localhost:{serverPort}/");
+                httpListener.Start();
+
+                // Start a thread to handle HTTP requests
+                serverThread = new Thread(HandleHttpRequests);
+                serverThread.IsBackground = true;
+                serverThread.Start();
+
+                // Set the flag
                 serverStarted = true;
-                
-                Debug.Log("[Unity MCP] Unity MCP server started");
+
+                Debug.Log($"[Unity MCP] Unity MCP server started on port {serverPort}");
             }
             catch (Exception ex)
             {
                 Debug.LogError($"[Unity MCP] Error starting Unity MCP server: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Handle HTTP requests
+        /// </summary>
+        private static void HandleHttpRequests()
+        {
+            while (httpListener != null && httpListener.IsListening)
+            {
+                try
+                {
+                    // Wait for a request
+                    var context = httpListener.GetContext();
+                    var request = context.Request;
+                    var response = context.Response;
+
+                    // Handle the request
+                    string responseText = "";
+                    bool handled = false;
+
+                    // Handle ping requests
+                    if (request.Url.AbsolutePath == "/ping")
+                    {
+                        responseText = "pong";
+                        handled = true;
+                    }
+                    // Handle game state requests
+                    else if (request.Url.AbsolutePath == "/api/CodeExecution/game-state")
+                    {
+                        var gameState = GetGameState();
+                        responseText = $"{{\"isPlaying\":{gameState.IsPlaying.ToString().ToLower()},\"isPaused\":{gameState.IsPaused.ToString().ToLower()},\"isCompiling\":{gameState.IsCompiling.ToString().ToLower()},\"currentScene\":\"{gameState.CurrentScene}\",\"timeScale\":{gameState.TimeScale},\"frameCount\":{gameState.FrameCount},\"realtimeSinceStartup\":{gameState.RealtimeSinceStartup}}}";
+                        handled = true;
+                    }
+                    // Handle start game requests
+                    else if (request.Url.AbsolutePath == "/api/CodeExecution/start-game")
+                    {
+                        StartGame();
+                        responseText = $"{{\"success\":true,\"result\":\"Game started successfully\",\"logs\":[\"Game started successfully\"],\"executionTime\":0}}";
+                        handled = true;
+                    }
+                    // Handle stop game requests
+                    else if (request.Url.AbsolutePath == "/api/CodeExecution/stop-game")
+                    {
+                        StopGame();
+                        responseText = $"{{\"success\":true,\"result\":\"Game stopped successfully\",\"logs\":[\"Game stopped successfully\"],\"executionTime\":0}}";
+                        handled = true;
+                    }
+
+                    // Send the response
+                    if (handled)
+                    {
+                        byte[] buffer = Encoding.UTF8.GetBytes(responseText);
+                        response.ContentLength64 = buffer.Length;
+                        response.ContentType = "application/json";
+                        response.StatusCode = 200;
+                        response.OutputStream.Write(buffer, 0, buffer.Length);
+                    }
+                    else
+                    {
+                        response.StatusCode = 404;
+                    }
+
+                    response.Close();
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"[Unity MCP] Error handling HTTP request: {ex.Message}");
+                }
             }
         }
 
@@ -83,16 +167,29 @@ namespace UnityMCP.Client.Editor
         public static void StopServer()
         {
             if (!serverStarted) return;
-            
+
             Debug.Log("[Unity MCP] Stopping Unity MCP server");
-            
+
             try
             {
-                // Stop the server process
-                // Note: In a real implementation, you would stop the actual server process here
-                // For now, we'll just set the flag
+                // Stop the HTTP listener
+                if (httpListener != null)
+                {
+                    httpListener.Stop();
+                    httpListener.Close();
+                    httpListener = null;
+                }
+
+                // Wait for the server thread to exit
+                if (serverThread != null && serverThread.IsAlive)
+                {
+                    serverThread.Join(5000); // Wait up to 5 seconds
+                    serverThread = null;
+                }
+
+                // Set the flag
                 serverStarted = false;
-                
+
                 Debug.Log("[Unity MCP] Unity MCP server stopped");
             }
             catch (Exception ex)
@@ -107,13 +204,13 @@ namespace UnityMCP.Client.Editor
         private static void Shutdown()
         {
             Debug.Log("[Unity MCP] Shutting down Unity MCP Editor Extension");
-            
+
             // Stop the server if it's running
             if (serverStarted)
             {
                 StopServer();
             }
-            
+
             isInitialized = false;
         }
 
@@ -123,7 +220,7 @@ namespace UnityMCP.Client.Editor
         private static void OnPlayModeStateChanged(PlayModeStateChange state)
         {
             Debug.Log($"[Unity MCP] Play mode state changed: {state}");
-            
+
             // You can add custom logic here for different play mode states
             switch (state)
             {
@@ -148,7 +245,7 @@ namespace UnityMCP.Client.Editor
         public static void StartGame()
         {
             if (EditorApplication.isPlaying) return;
-            
+
             Debug.Log("[Unity MCP] Starting game (entering play mode)");
             EditorApplication.isPlaying = true;
         }
@@ -159,7 +256,7 @@ namespace UnityMCP.Client.Editor
         public static void StopGame()
         {
             if (!EditorApplication.isPlaying) return;
-            
+
             Debug.Log("[Unity MCP] Stopping game (exiting play mode)");
             EditorApplication.isPlaying = false;
         }
@@ -167,9 +264,9 @@ namespace UnityMCP.Client.Editor
         /// <summary>
         /// Get the current game state
         /// </summary>
-        public static GameState GetGameState()
+        public static EditorGameState GetGameState()
         {
-            return new GameState
+            return new EditorGameState
             {
                 IsPlaying = EditorApplication.isPlaying,
                 IsPaused = EditorApplication.isPaused,
@@ -186,38 +283,38 @@ namespace UnityMCP.Client.Editor
     /// Game state information
     /// </summary>
     [Serializable]
-    public class GameState
+    public class EditorGameState
     {
         /// <summary>
         /// Whether the game is currently playing
         /// </summary>
         public bool IsPlaying { get; set; }
-        
+
         /// <summary>
         /// Whether the game is currently paused
         /// </summary>
         public bool IsPaused { get; set; }
-        
+
         /// <summary>
         /// Whether the editor is currently compiling
         /// </summary>
         public bool IsCompiling { get; set; }
-        
+
         /// <summary>
         /// The name of the current scene
         /// </summary>
         public string CurrentScene { get; set; }
-        
+
         /// <summary>
         /// The current time scale
         /// </summary>
         public float TimeScale { get; set; }
-        
+
         /// <summary>
         /// The current frame count
         /// </summary>
         public int FrameCount { get; set; }
-        
+
         /// <summary>
         /// The time in seconds since the start of the game
         /// </summary>

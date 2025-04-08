@@ -40,7 +40,7 @@ namespace UnityMCP.Client.Services
         /// Get the current game state
         /// </summary>
         /// <returns>The current game state</returns>
-        Task<GameState> GetGameStateAsync();
+        Task<Models.GameState> GetGameStateAsync();
 
         /// <summary>
         /// Start the game (enter play mode)
