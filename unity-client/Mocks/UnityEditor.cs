@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
+using UnityMCP.Mocks.UnityEngine;
 
-namespace UnityEditor
+namespace UnityMCP.Mocks.UnityEditor
 {
     // Mock implementation of UnityEditor classes for building without Unity
 
