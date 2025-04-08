@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Net;
 using System.Threading;
 using System.Text;
+using System.Text.Json;
 using System.IO;
 using Debug = UnityEngine.Debug;
 
@@ -89,6 +90,7 @@ namespace UnityMCP.Client.Editor
     public class AILogger
     {
         private string _logName;
+        private const string LogEndpoint = "http://localhost:3030/logs";
 
         /// <summary>
         /// Constructor
@@ -100,15 +102,101 @@ namespace UnityMCP.Client.Editor
         }
 
         /// <summary>
+        /// Log a debug message
+        /// </summary>
+        /// <param name="message">The message to log</param>
+        /// <param name="data">Additional data (optional)</param>
+        /// <returns>Task</returns>
+        public async Task Debug(string message, object data = null)
+        {
+            UnityEngine.Debug.Log($"[{_logName}] DEBUG: {message}");
+            await AppendToLog(message, data, "DEBUG");
+        }
+
+        /// <summary>
         /// Log an info message
         /// </summary>
         /// <param name="message">The message to log</param>
         /// <param name="data">Additional data (optional)</param>
         /// <returns>Task</returns>
-        public Task Info(string message, object data = null)
+        public async Task Info(string message, object data = null)
         {
-            Debug.Log($"[{_logName}] {message}: {(data != null ? data.ToString() : "null")}");
-            return Task.CompletedTask;
+            UnityEngine.Debug.Log($"[{_logName}] INFO: {message}");
+            await AppendToLog(message, data, "INFO");
+        }
+
+        /// <summary>
+        /// Log a warning message
+        /// </summary>
+        /// <param name="message">The message to log</param>
+        /// <param name="data">Additional data (optional)</param>
+        /// <returns>Task</returns>
+        public async Task Warning(string message, object data = null)
+        {
+            UnityEngine.Debug.LogWarning($"[{_logName}] WARNING: {message}");
+            await AppendToLog(message, data, "WARNING");
+        }
+
+        /// <summary>
+        /// Log an error message
+        /// </summary>
+        /// <param name="message">The message to log</param>
+        /// <param name="data">Additional data (optional)</param>
+        /// <returns>Task</returns>
+        public async Task Error(string message, object data = null)
+        {
+            UnityEngine.Debug.LogError($"[{_logName}] ERROR: {message}");
+            await AppendToLog(message, data, "ERROR");
+        }
+
+        /// <summary>
+        /// Append to log
+        /// </summary>
+        /// <param name="message">The message to log</param>
+        /// <param name="data">Additional data</param>
+        /// <param name="level">Log level</param>
+        /// <returns>Task</returns>
+        private async Task AppendToLog(string message, object data, string level)
+        {
+            try
+            {
+                // Create the log data
+                var logData = new
+                {
+                    message,
+                    data,
+                    level,
+                    timestamp = DateTime.UtcNow
+                };
+
+                // Convert to JSON
+                string json = System.Text.Json.JsonSerializer.Serialize(logData);
+
+                // Create the request
+                var request = WebRequest.Create($"{LogEndpoint}/{_logName}");
+                request.Method = "POST";
+                request.ContentType = "application/json";
+
+                // Write the data
+                using (var streamWriter = new StreamWriter(await request.GetRequestStreamAsync()))
+                {
+                    await streamWriter.WriteAsync(json);
+                }
+
+                // Get the response
+                using (var response = await request.GetResponseAsync())
+                {
+                    using (var streamReader = new StreamReader(response.GetResponseStream()))
+                    {
+                        var result = await streamReader.ReadToEndAsync();
+                        UnityEngine.Debug.Log($"[{_logName}] Log appended: {result}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                UnityEngine.Debug.LogError($"[{_logName}] Error appending to log: {ex.Message}");
+            }
         }
     }
 
@@ -125,6 +213,44 @@ namespace UnityMCP.Client.Editor
         private static Thread serverThread;
         private static int serverPort = 8081;
         private static CancellationTokenSource cancellationTokenSource;
+
+        // Dictionary to store log entries
+        private static Dictionary<string, object> logEntries = new Dictionary<string, object>();
+        private static object logLock = new object();
+
+        /// <summary>
+        /// Store a log entry
+        /// </summary>
+        /// <param name="logName">The name of the log</param>
+        /// <param name="data">The data to store</param>
+        private static void StoreLogEntry(string logName, object data)
+        {
+            lock (logLock)
+            {
+                logEntries[logName] = data;
+                Debug.Log($"[Unity MCP] Stored log entry: {logName}");
+            }
+        }
+
+        /// <summary>
+        /// Get a log entry
+        /// </summary>
+        /// <param name="logName">The name of the log</param>
+        /// <returns>The log entry data</returns>
+        private static object GetLogEntry(string logName)
+        {
+            lock (logLock)
+            {
+                if (logEntries.TryGetValue(logName, out var data))
+                {
+                    Debug.Log($"[Unity MCP] Retrieved log entry: {logName}");
+                    return data;
+                }
+
+                Debug.LogWarning($"[Unity MCP] Log entry not found: {logName}");
+                return null;
+            }
+        }
 
         /// <summary>
         /// Static constructor called on Unity Editor startup
@@ -248,10 +374,26 @@ namespace UnityMCP.Client.Editor
                             };
 
                             // Log that we're returning a default game state
-                            Debug.Log("[Unity MCP] Returning default game state due to thread safety issues");
-                            // Log the game state using AILogger
-                            var stateLogger = new AILogger("unity-state");
-                            _ = stateLogger.Info("Game state", gameState);
+                            Debug.Log("[Unity MCP] Returning default game state");
+
+                            // Create a log entry for the AI
+                            var logEntry = new
+                            {
+                                result = new
+                                {
+                                    isPlaying = gameState.IsPlaying,
+                                    isPaused = gameState.IsPaused,
+                                    isCompiling = gameState.IsCompiling,
+                                    currentScene = gameState.CurrentScene,
+                                    timeScale = gameState.TimeScale,
+                                    frameCount = gameState.FrameCount,
+                                    realtimeSinceStartup = gameState.RealtimeSinceStartup
+                                },
+                                timestamp = DateTime.UtcNow
+                            };
+
+                            // Store the log entry for the AI to retrieve
+                            StoreLogEntry("unity-state-" + DateTime.UtcNow.Ticks, logEntry);
 
                             responseText = $"{{\"isPlaying\":{gameState.IsPlaying.ToString().ToLower()},\"isPaused\":{gameState.IsPaused.ToString().ToLower()},\"isCompiling\":{gameState.IsCompiling.ToString().ToLower()},\"currentScene\":\"{gameState.CurrentScene}\",\"timeScale\":{gameState.TimeScale},\"frameCount\":{gameState.FrameCount},\"realtimeSinceStartup\":{gameState.RealtimeSinceStartup}}}";
                             handled = true;
@@ -260,10 +402,23 @@ namespace UnityMCP.Client.Editor
                         else if (request.Url.AbsolutePath == "/api/CodeExecution/start-game")
                         {
                             // Log that we're simulating starting the game
-                            Debug.Log("[Unity MCP] Simulating game start due to thread safety issues");
-                            // Log the game start using AILogger
-                            var startLogger = new AILogger("unity-start");
-                            _ = startLogger.Info("Game start", new { success = true });
+                            Debug.Log("[Unity MCP] Simulating game start");
+
+                            // Create a log entry for the AI
+                            var logEntry = new
+                            {
+                                result = new
+                                {
+                                    success = true,
+                                    result = "Game started successfully (simulated)",
+                                    logs = new[] { "Game started successfully (simulated)" },
+                                    executionTime = 2
+                                },
+                                timestamp = DateTime.UtcNow
+                            };
+
+                            // Store the log entry for the AI to retrieve
+                            StoreLogEntry("unity-start-" + DateTime.UtcNow.Ticks, logEntry);
 
                             // Return a success response
                             responseText = $"{{\"success\":true,\"result\":\"Game started successfully (simulated)\",\"logs\":[\"Game started successfully (simulated)\"],\"executionTime\":0}}";
@@ -273,10 +428,23 @@ namespace UnityMCP.Client.Editor
                         else if (request.Url.AbsolutePath == "/api/CodeExecution/stop-game")
                         {
                             // Log that we're simulating stopping the game
-                            Debug.Log("[Unity MCP] Simulating game stop due to thread safety issues");
-                            // Log the game stop using AILogger
-                            var stopLogger = new AILogger("unity-stop");
-                            _ = stopLogger.Info("Game stop", new { success = true });
+                            Debug.Log("[Unity MCP] Simulating game stop");
+
+                            // Create a log entry for the AI
+                            var logEntry = new
+                            {
+                                result = new
+                                {
+                                    success = true,
+                                    result = "Game stopped successfully (simulated)",
+                                    logs = new[] { "Game stopped successfully (simulated)" },
+                                    executionTime = 2
+                                },
+                                timestamp = DateTime.UtcNow
+                            };
+
+                            // Store the log entry for the AI to retrieve
+                            StoreLogEntry("unity-stop-" + DateTime.UtcNow.Ticks, logEntry);
 
                             // Return a success response
                             responseText = $"{{\"success\":true,\"result\":\"Game stopped successfully (simulated)\",\"logs\":[\"Game stopped successfully (simulated)\"],\"executionTime\":0}}";
