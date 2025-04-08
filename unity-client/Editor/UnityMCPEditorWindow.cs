@@ -19,7 +19,7 @@ namespace UnityMCP.Client.Editor
         /// <summary>
         /// Show the Unity MCP Editor Window
         /// </summary>
-        [MenuItem("Window/Unity MCP/Control Panel")]
+        [MenuItemAttribute("Window/Unity MCP/Control Panel")]
         public static void ShowWindow()
         {
             GetWindow<UnityMCPEditorWindow>("Unity MCP");

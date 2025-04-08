@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup>
+    <!-- Set the Unity Editor path here -->
+    <UnityEditorPath Condition="'$(OS)' == 'Windows_NT'">C:\Program Files\Unity\Editor</UnityEditorPath>
+    <UnityEditorPath Condition="'$(OS)' == 'Unix' AND Exists('/Applications/Unity/Unity.app')">
+      /Applications/Unity/Unity.app/Contents
+    </UnityEditorPath>
+  </PropertyGroup>
+</Project>

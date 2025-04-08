@@ -239,7 +239,7 @@ namespace UnityMCP.Client.Editor
     /// <summary>
     /// Editor extension for Unity MCP integration
     /// </summary>
-    [InitializeOnLoad]
+    [InitializeOnLoadAttribute]
     public class UnityMCPEditorExtension
     {
         private static bool isInitialized = false;
@@ -1147,3 +1147,4 @@ namespace UnityMCP.Client.Editor
             public float RealtimeSinceStartup { get; set; }
         }
     }
+}
