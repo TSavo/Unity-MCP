@@ -478,56 +478,102 @@ namespace UnityMCP.Client.Editor
                             handled = true;
                         }
                         // Handle start game requests
-                        else if (request.Url.AbsolutePath == "/api/CodeExecution/start-game")
+                        else if (request.Url.AbsolutePath == "/api/CodeExecution/start-game" && request.HttpMethod == "POST")
                         {
-                            // Log that we're simulating starting the game
-                            Debug.Log("[Unity MCP] Simulating game start");
-
-                            // Create a log entry for the AI
-                            var logEntry = new
+                            try
                             {
-                                result = new
+                                // Log that we're handling a start game request
+                                Debug.Log("[Unity MCP] Handling start game request");
+                                _ = debugLogger.Info("Handling start game request");
+
+                                // We need to call StartGame on the main thread
+                                // For now, we'll just simulate it
+                                bool success = true;
+                                string result = "Game started successfully (simulated)";
+                                string[] logs = new[] { "Game started successfully (simulated)" };
+
+                                // Create a log entry for the AI
+                                var logEntry = new
                                 {
-                                    success = true,
-                                    result = "Game started successfully (simulated)",
-                                    logs = new[] { "Game started successfully (simulated)" },
-                                    executionTime = 2
-                                },
-                                timestamp = DateTime.UtcNow
-                            };
+                                    result = new
+                                    {
+                                        success = success,
+                                        result = result,
+                                        logs = logs,
+                                        executionTime = 2
+                                    },
+                                    timestamp = DateTime.UtcNow
+                                };
 
-                            // Store the log entry for the AI to retrieve
-                            StoreLogEntry("unity-start-" + DateTime.UtcNow.Ticks, logEntry);
+                                // Store the log entry for the AI to retrieve
+                                string logName = "unity-start-" + DateTime.UtcNow.Ticks;
+                                StoreLogEntry(logName, logEntry);
+                                _ = debugLogger.Info($"Stored log entry: {logName}");
 
-                            // Return a success response
-                            responseText = $"{{\"success\":true,\"result\":\"Game started successfully (simulated)\",\"logs\":[\"Game started successfully (simulated)\"],\"executionTime\":0}}";
-                            handled = true;
+                                // Return a success response
+                                responseText = $"{{\"success\":{success.ToString().ToLower()},\"result\":\"{result}\",\"logs\":[\"Game started successfully (simulated)\"],\"executionTime\":0}}";
+                                handled = true;
+                                _ = debugLogger.Info("Start game request handled successfully");
+                            }
+                            catch (Exception ex)
+                            {
+                                // Log the error
+                                Debug.LogError($"[Unity MCP] Error handling start game request: {ex.Message}");
+                                _ = debugLogger.Error($"Error handling start game request: {ex.Message}", new { stackTrace = ex.StackTrace });
+
+                                // Return an error response
+                                responseText = $"{{\"success\":false,\"error\":\"Error handling start game request: {ex.Message}\"}}";
+                                handled = true;
+                            }
                         }
                         // Handle stop game requests
-                        else if (request.Url.AbsolutePath == "/api/CodeExecution/stop-game")
+                        else if (request.Url.AbsolutePath == "/api/CodeExecution/stop-game" && request.HttpMethod == "POST")
                         {
-                            // Log that we're simulating stopping the game
-                            Debug.Log("[Unity MCP] Simulating game stop");
-
-                            // Create a log entry for the AI
-                            var logEntry = new
+                            try
                             {
-                                result = new
+                                // Log that we're handling a stop game request
+                                Debug.Log("[Unity MCP] Handling stop game request");
+                                _ = debugLogger.Info("Handling stop game request");
+
+                                // We need to call StopGame on the main thread
+                                // For now, we'll just simulate it
+                                bool success = true;
+                                string result = "Game stopped successfully (simulated)";
+                                string[] logs = new[] { "Game stopped successfully (simulated)" };
+
+                                // Create a log entry for the AI
+                                var logEntry = new
                                 {
-                                    success = true,
-                                    result = "Game stopped successfully (simulated)",
-                                    logs = new[] { "Game stopped successfully (simulated)" },
-                                    executionTime = 2
-                                },
-                                timestamp = DateTime.UtcNow
-                            };
+                                    result = new
+                                    {
+                                        success = success,
+                                        result = result,
+                                        logs = logs,
+                                        executionTime = 2
+                                    },
+                                    timestamp = DateTime.UtcNow
+                                };
 
-                            // Store the log entry for the AI to retrieve
-                            StoreLogEntry("unity-stop-" + DateTime.UtcNow.Ticks, logEntry);
+                                // Store the log entry for the AI to retrieve
+                                string logName = "unity-stop-" + DateTime.UtcNow.Ticks;
+                                StoreLogEntry(logName, logEntry);
+                                _ = debugLogger.Info($"Stored log entry: {logName}");
 
-                            // Return a success response
-                            responseText = $"{{\"success\":true,\"result\":\"Game stopped successfully (simulated)\",\"logs\":[\"Game stopped successfully (simulated)\"],\"executionTime\":0}}";
-                            handled = true;
+                                // Return a success response
+                                responseText = $"{{\"success\":{success.ToString().ToLower()},\"result\":\"{result}\",\"logs\":[\"Game stopped successfully (simulated)\"],\"executionTime\":0}}";
+                                handled = true;
+                                _ = debugLogger.Info("Stop game request handled successfully");
+                            }
+                            catch (Exception ex)
+                            {
+                                // Log the error
+                                Debug.LogError($"[Unity MCP] Error handling stop game request: {ex.Message}");
+                                _ = debugLogger.Error($"Error handling stop game request: {ex.Message}", new { stackTrace = ex.StackTrace });
+
+                                // Return an error response
+                                responseText = $"{{\"success\":false,\"error\":\"Error handling stop game request: {ex.Message}\"}}";
+                                handled = true;
+                            }
                         }
 
                         // Send the response
