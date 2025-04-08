@@ -1023,34 +1023,6 @@ namespace UnityMCP.Client.Editor
         }
 
         /// <summary>
-        /// Extract the last statement from a code block
-        /// </summary>
-        /// <param name="code">The code block</param>
-        /// <returns>The last statement</returns>
-        private static string ExtractLastStatement(string code)
-        {
-            // This is a very simple implementation that just returns the last line
-            // In a real implementation, you would use a more robust approach
-            // like parsing the code with Roslyn
-
-            // Split the code into lines
-            string[] lines = code.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-
-            // Find the last non-empty line that's not a comment
-            for (int i = lines.Length - 1; i >= 0; i--)
-            {
-                string line = lines[i].Trim();
-                if (!string.IsNullOrEmpty(line) && !line.StartsWith("//") && !line.StartsWith("/*") && !line.StartsWith("*"))
-                {
-                    return line;
-                }
-            }
-
-            // If we couldn't find a valid last statement, return null
-            return null;
-        }
-
-        /// <summary>
         /// Evaluate a simple expression
         /// </summary>
         /// <param name="expression">The expression to evaluate</param>
