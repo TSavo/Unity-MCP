@@ -409,10 +409,31 @@ namespace UnityMCP.Client.Editor
                     // Super simple response for all requests
                     string responseText = "{ \"success\": true, \"message\": \"Hello from Unity MCP!\" }";
 
-                    // Special case for ping
+                    // Special cases for different endpoints
                     if (request.Url.AbsolutePath == "/ping")
                     {
                         responseText = "pong";
+                    }
+                    else if (request.Url.AbsolutePath == "/api/CodeExecution/start-game")
+                    {
+                        Debug.Log("[Unity MCP] Starting game");
+                        responseText = "{ \"success\": true, \"message\": \"Game started\" }";
+
+                        // Actually start the game (in a real implementation)
+                        // StartGame();
+                    }
+                    else if (request.Url.AbsolutePath == "/api/CodeExecution/stop-game")
+                    {
+                        Debug.Log("[Unity MCP] Stopping game");
+                        responseText = "{ \"success\": true, \"message\": \"Game stopped\" }";
+
+                        // Actually stop the game (in a real implementation)
+                        // StopGame();
+                    }
+                    else if (request.Url.AbsolutePath == "/api/CodeExecution/game-state")
+                    {
+                        Debug.Log("[Unity MCP] Getting game state");
+                        responseText = "{ \"isPlaying\": false, \"isPaused\": false, \"isCompiling\": false, \"currentScene\": \"SampleScene\", \"timeScale\": 1.0, \"frameCount\": 0, \"realtimeSinceStartup\": 0.0 }";
                     }
 
                     // Send the response
