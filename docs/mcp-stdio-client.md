@@ -7,9 +7,11 @@ This document explains how to use the MCP STDIO client, which allows Claude to c
 The MCP STDIO client is a Node.js application that:
 
 1. Communicates with Claude via stdin/stdout using the Model Context Protocol (MCP)
-2. Forwards requests directly to Unity
+2. Forwards requests directly to the Unity Client
 3. Stores results in AILogger for later retrieval
 4. Logs to a fully qualified path for easy access
+
+The MCP STDIO client communicates directly with the Unity Client, which provides endpoints for both code execution and queries. For queries, the Unity Client wraps the query in a `return` statement before execution.
 
 ## Logging
 

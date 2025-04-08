@@ -11,13 +11,15 @@ Unity-MCP is an open-source implementation of the Model Context Protocol for Uni
 The architecture has been simplified to use AILogger for persistence, removing the need for a separate server component:
 
 ```
-AI Assistant <-> Unity-MCP STDIO Client <-> Unity <-> AILogger
+AI Assistant <-> Unity-MCP STDIO Client <-> Unity Client <-> AILogger
 ```
 
 - **AI Assistant**: Communicates with the Unity-MCP STDIO Client using the MCP protocol
-- **Unity-MCP STDIO Client**: Forwards commands to Unity and stores results in AILogger
-- **Unity**: Executes commands and returns results
+- **Unity-MCP STDIO Client**: Forwards commands to the Unity Client and stores results in AILogger
+- **Unity Client**: Executes commands in Unity and returns results
 - **AILogger**: Stores logs and results for later retrieval
+
+The Unity-MCP STDIO Client communicates directly with the Unity Client, which provides endpoints for both code execution and queries. The query tool transforms queries into code execution by wrapping them in a `return` statement.
 
 ## Features
 
@@ -38,6 +40,7 @@ AI Assistant <-> Unity-MCP STDIO Client <-> Unity <-> AILogger
 
 - [MCP Architecture](docs/mcp-architecture.md): Overview of the MCP architecture and namespaces
 - [MCP STDIO Client](docs/mcp-stdio-client.md): Information about the MCP STDIO client and its logging capabilities
+- [Query Tool](docs/query-tool.md): Detailed information about the query tool and how it works
 - [AILogger Integration](docs/ai-logger-sdk.md): Detailed information about the AILogger integration
 - [API Reference](docs/api-reference.md): Detailed information about the API endpoints
 - [Installation Guide](docs/installation.md): Step-by-step instructions for installing and setting up Unity-MCP

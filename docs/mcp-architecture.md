@@ -4,10 +4,11 @@ This document provides an overview of the Model Context Protocol (MCP) architect
 
 ## Overview
 
-The MCP system consists of two main components:
+The MCP system consists of three main components:
 
-1. **MCP Server**: A Node.js server that provides a REST API for interacting with Unity
-2. **MCP STDIO Client**: A command-line interface that allows Claude to interact with the MCP Server
+1. **MCP STDIO Client**: A command-line interface that allows Claude to interact with Unity using the MCP protocol
+2. **Unity Client**: A .NET application that executes code and queries in Unity
+3. **AILogger**: A system for storing and retrieving logs and results
 
 The MCP system is designed to be modular and extensible, with a clean separation of concerns between different components.
 
@@ -58,10 +59,12 @@ The Logs namespace is responsible for storing and retrieving log entries. It is 
 ## Data Flow
 
 1. Claude sends a request to the MCP STDIO Client
-2. The MCP STDIO Client forwards the request to the MCP Server
-3. The MCP Server processes the request and interacts with Unity if necessary
-4. The MCP Server returns the result to the MCP STDIO Client
-5. The MCP STDIO Client returns the result to Claude
+2. The MCP STDIO Client forwards the request directly to the Unity Client
+3. The Unity Client executes the request in Unity
+   - For queries, the Unity Client wraps the query in a `return` statement before execution
+4. The Unity Client returns the result to the MCP STDIO Client
+5. The MCP STDIO Client stores the result in AILogger
+6. The MCP STDIO Client returns the result to Claude
 
 ## Components
 
@@ -85,20 +88,28 @@ The LoggingSystem is responsible for storing and retrieving log entries. It prov
 
 ### MCP STDIO Client
 
-The MCP STDIO Client is a command-line interface that allows Claude to interact with the MCP Server. It provides the following functionality:
+The MCP STDIO Client is a command-line interface that allows Claude to interact with Unity. It provides the following functionality:
 
 - Parse JSON-RPC requests from Claude
-- Forward requests to the MCP Server
+- Forward requests directly to the Unity Client
+- Store results in AILogger
 - Return results to Claude
 
-### MCP Server
+### Unity Client
 
-The MCP Server is a Node.js server that provides a REST API for interacting with Unity. It provides the following functionality:
+The Unity Client is a .NET application that executes code and queries in Unity. It provides the following functionality:
 
-- Execute tools
-- Store and retrieve operation results
-- Store and retrieve log entries
-- Interact with Unity
+- Execute C# code in Unity
+- Execute queries by wrapping them in a `return` statement
+- Return results to the MCP STDIO Client
+
+### AILogger
+
+AILogger is a system for storing and retrieving logs and results. It provides the following functionality:
+
+- Store logs and results
+- Retrieve logs and results
+- Append to existing logs
 
 ## Security
 
