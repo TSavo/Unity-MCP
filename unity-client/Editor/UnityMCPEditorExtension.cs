@@ -7,13 +7,111 @@ using System.Net;
 using System.Threading;
 using System.Text;
 using System.IO;
-using Newtonsoft.Json;
-using UnityMCP.Unity.Logging;
-using UnityMCP.Unity.Models;
 using Debug = UnityEngine.Debug;
 
 namespace UnityMCP.Client.Editor
 {
+    /// <summary>
+    /// Result of a code execution operation
+    /// </summary>
+    public class CodeExecutionResult
+    {
+        /// <summary>
+        /// Whether the execution was successful
+        /// </summary>
+        public bool Success { get; set; }
+
+        /// <summary>
+        /// The result of the execution (if successful)
+        /// </summary>
+        public string Result { get; set; }
+
+        /// <summary>
+        /// The error message (if unsuccessful)
+        /// </summary>
+        public string Error { get; set; }
+
+        /// <summary>
+        /// Logs from the execution
+        /// </summary>
+        public List<string> Logs { get; set; } = new List<string>();
+
+        /// <summary>
+        /// The time taken to execute the code (in milliseconds)
+        /// </summary>
+        public long ExecutionTime { get; set; }
+    }
+
+    /// <summary>
+    /// Represents the current state of the game
+    /// </summary>
+    public class GameState
+    {
+        /// <summary>
+        /// Whether the game is currently playing
+        /// </summary>
+        public bool IsPlaying { get; set; }
+
+        /// <summary>
+        /// Whether the game is currently paused
+        /// </summary>
+        public bool IsPaused { get; set; }
+
+        /// <summary>
+        /// Whether the game is currently compiling
+        /// </summary>
+        public bool IsCompiling { get; set; }
+
+        /// <summary>
+        /// The name of the current scene
+        /// </summary>
+        public string CurrentScene { get; set; } = string.Empty;
+
+        /// <summary>
+        /// The current time scale
+        /// </summary>
+        public float TimeScale { get; set; }
+
+        /// <summary>
+        /// The current frame count
+        /// </summary>
+        public int FrameCount { get; set; }
+
+        /// <summary>
+        /// The time since the game started
+        /// </summary>
+        public float RealtimeSinceStartup { get; set; }
+    }
+
+    /// <summary>
+    /// Simple logger for AI integration
+    /// </summary>
+    public class AILogger
+    {
+        private string _logName;
+
+        /// <summary>
+        /// Constructor
+        /// </summary>
+        /// <param name="logName">The name of the log</param>
+        public AILogger(string logName)
+        {
+            _logName = logName;
+        }
+
+        /// <summary>
+        /// Log an info message
+        /// </summary>
+        /// <param name="message">The message to log</param>
+        /// <param name="data">Additional data (optional)</param>
+        /// <returns>Task</returns>
+        public Task Info(string message, object data = null)
+        {
+            Debug.Log($"[{_logName}] {message}: {(data != null ? data.ToString() : "null")}");
+            return Task.CompletedTask;
+        }
+    }
+
     /// <summary>
     /// Editor extension for Unity MCP integration
     /// </summary>
