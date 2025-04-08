@@ -881,18 +881,22 @@ namespace UnityMCP.Client.Editor
             {
                 // Log the code we're executing
                 Debug.Log($"[Unity MCP] Executing code: {code}");
+                StoreLogEntry("unity-execute-input", new { code });
 
                 // Create a command context
                 var context = new CommandContext();
 
                 // Parse the code into a command
                 ICommand command = CommandFactory.CreateCommand(code);
+                Debug.Log($"[Unity MCP] Created command of type: {command.GetType().Name}");
+                StoreLogEntry("unity-execute-command", new { commandType = command.GetType().Name });
 
                 // Execute the command
                 object result = command.Execute(context);
 
                 // Log the result
                 Debug.Log($"[Unity MCP] Code executed successfully. Result: {result}");
+                StoreLogEntry("unity-execute-result", new { result = result?.ToString() });
 
                 // Return the result
                 return result;
@@ -901,6 +905,7 @@ namespace UnityMCP.Client.Editor
             {
                 // Log the error
                 Debug.LogError($"[Unity MCP] Error executing code: {ex.Message}");
+                StoreLogEntry("unity-execute-error", new { error = ex.Message, stackTrace = ex.StackTrace });
                 throw; // Rethrow the exception to be caught by the caller
             }
         }
