@@ -16,28 +16,22 @@ namespace UnityMCP.Client.Editor.Commands
         /// <returns>The command to execute</returns>
         public static ICommand CreateCommand(string code)
         {
-            // This is a simple implementation that parses the code into a command
-            // In a real implementation, you would use a more robust approach
-            // like parsing the code with a proper parser
-            
-            // For now, we'll just handle a few simple cases
-            
-            // Trim the code
-            code = code.Trim();
-            
-            // Check if it's a create GameObject command
-            if (code.Contains("new GameObject") || code.Contains("GameObject.Create"))
+            // Parse the code into a command using the CommandParser
+            var commands = CommandParser.Parse(code);
+
+            // If we got multiple commands, create a composite command
+            if (commands.Count > 1)
             {
-                return new CreateGameObjectCommand(code);
+                return new CompositeCommand(commands);
             }
-            
-            // Check if it's a log command
-            if (code.Contains("Debug.Log"))
+
+            // If we got a single command, return it
+            if (commands.Count == 1)
             {
-                return new LogCommand(code);
+                return commands[0];
             }
-            
-            // For other commands, we'll just return a generic command
+
+            // If we couldn't parse the code, return a generic command
             return new GenericCommand(code);
         }
     }

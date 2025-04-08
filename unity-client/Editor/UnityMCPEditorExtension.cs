@@ -882,11 +882,14 @@ namespace UnityMCP.Client.Editor
                 // Log the code we're executing
                 Debug.Log($"[Unity MCP] Executing code: {code}");
 
+                // Create a command context
+                var context = new CommandContext();
+
                 // Parse the code into a command
                 ICommand command = CommandFactory.CreateCommand(code);
 
                 // Execute the command
-                object result = command.Execute();
+                object result = command.Execute(context);
 
                 // Log the result
                 Debug.Log($"[Unity MCP] Code executed successfully. Result: {result}");

@@ -4,23 +4,23 @@ using UnityEngine;
 namespace UnityMCP.Client.Editor.Commands
 {
     /// <summary>
-    /// Command for creating a GameObject
+    /// Command for finding a GameObject by name
     /// </summary>
-    public class CreateGameObjectCommand : CommandBase
+    public class FindGameObjectCommand : CommandBase
     {
-        private readonly string _code;
-
+        private readonly string _gameObjectName;
+        
         /// <summary>
-        /// Create a new CreateGameObjectCommand
+        /// Create a new FindGameObjectCommand
         /// </summary>
-        /// <param name="code">The code to execute</param>
+        /// <param name="gameObjectName">The name of the GameObject to find</param>
         /// <param name="resultVariableName">The variable name to store the result in, if any</param>
-        public CreateGameObjectCommand(string code, string resultVariableName = null)
+        public FindGameObjectCommand(string gameObjectName, string resultVariableName = null)
             : base(resultVariableName)
         {
-            _code = code;
+            _gameObjectName = gameObjectName;
         }
-
+        
         /// <summary>
         /// Execute the command and return the result
         /// </summary>
@@ -28,21 +28,25 @@ namespace UnityMCP.Client.Editor.Commands
         /// <returns>The result of the command execution</returns>
         public override object Execute(CommandContext context)
         {
-            // This is a simple implementation that creates a GameObject
-            // In a real implementation, you would parse the code to extract parameters
-
-            // For now, we'll just create a GameObject with a default name
-            var gameObject = new GameObject("CommandCreatedObject");
-
-            // Log the creation
-            Debug.Log($"[Unity MCP] Created GameObject: {gameObject.name}");
-
+            // Find the GameObject by name
+            GameObject gameObject = GameObject.Find(_gameObjectName);
+            
+            // Log the result
+            if (gameObject != null)
+            {
+                Debug.Log($"[Unity MCP] Found GameObject: {gameObject.name}");
+            }
+            else
+            {
+                Debug.LogWarning($"[Unity MCP] GameObject '{_gameObjectName}' not found");
+            }
+            
             // Store the result in the context if a variable name was provided
             if (!string.IsNullOrEmpty(ResultVariableName))
             {
                 context.SetVariable(ResultVariableName, gameObject);
             }
-
+            
             // Return the GameObject
             return gameObject;
         }
