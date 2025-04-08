@@ -1,4 +1,5 @@
 using UnityMCP.Client.Models;
+using System;
 
 namespace UnityMCP.Client.Services
 {
