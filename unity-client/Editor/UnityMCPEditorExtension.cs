@@ -159,6 +159,9 @@ namespace UnityMCP.Client.Editor
         {
             try
             {
+                // Log to Unity console first (in case the HTTP request fails)
+                Debug.Log($"[{_logName}] {level}: {message}");
+
                 // Create a simple JSON string manually
                 string dataJson = data != null ? (data is string ? $"\"{data}\"" : data.ToString()) : "null";
                 string json = $"{{\"message\":\"{message}\",\"data\":{dataJson},\"level\":\"{level}\",\"timestamp\":\"{DateTime.UtcNow.ToString("o")}\"}}";
@@ -184,9 +187,30 @@ namespace UnityMCP.Client.Editor
                     }
                 }
             }
+            catch (WebException webEx) when (webEx.Response is HttpWebResponse response)
+            {
+                // Handle HTTP errors specifically
+                UnityEngine.Debug.LogError($"[{_logName}] HTTP error appending to log: {(int)response.StatusCode} {response.StatusDescription}");
+
+                // Try to read the response body for more details
+                try
+                {
+                    using (var streamReader = new StreamReader(webEx.Response.GetResponseStream()))
+                    {
+                        var errorResponse = await streamReader.ReadToEndAsync();
+                        UnityEngine.Debug.LogError($"[{_logName}] Error details: {errorResponse}");
+                    }
+                }
+                catch
+                {
+                    // Ignore errors when trying to read the error response
+                }
+            }
             catch (Exception ex)
             {
+                // Handle other errors
                 UnityEngine.Debug.LogError($"[{_logName}] Error appending to log: {ex.Message}");
+                UnityEngine.Debug.LogError($"[{_logName}] Stack trace: {ex.StackTrace}");
             }
         }
     }
