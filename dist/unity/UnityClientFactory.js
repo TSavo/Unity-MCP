@@ -18,7 +18,7 @@ class UnityClientFactory {
      * @returns A Unity client instance
      */
     static createClient(config = {}) {
-        const { host = 'localhost', port = 8081, resilient = true } = config;
+        const { host = 'localhost', port = 8082, resilient = true } = config;
         // Check if we should use a mock client
         if (process.env.UNITY_MOCK === 'true') {
             logger_1.default.info('Using mock Unity client');

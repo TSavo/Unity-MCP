@@ -12,9 +12,9 @@ export class UnityClient implements IUnityClient {
   /**
    * Create a new Unity client
    * @param host Unity host (default: localhost)
-   * @param port Unity port (default: 8081)
+   * @param port Unity port (default: 8082)
    */
-  constructor(host: string = 'localhost', port: number = 8081) {
+  constructor(host: string = 'localhost', port: number = 8082) {
     this.baseUrl = `http://${host}:${port}`;
     this.axios = axios.create({
       baseURL: this.baseUrl,

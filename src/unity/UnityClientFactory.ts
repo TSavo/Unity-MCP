@@ -14,7 +14,7 @@ export class UnityClientFactory {
    * @returns A Unity client instance
    */
   public static createClient(config: UnityClientConfig = {}): IUnityClient {
-    const { host = 'localhost', port = 8081, resilient = true } = config;
+    const { host = 'localhost', port = 8082, resilient = true } = config;
 
     // Check if we should use a mock client
     if (process.env.UNITY_MOCK === 'true') {

@@ -10,7 +10,7 @@ const logger_1 = __importDefault(require("../utils/logger"));
  * Unity client with retry and resilience features
  */
 class ResilientUnityClient {
-    constructor(host = 'localhost', port = 8081, options = {}) {
+    constructor(host = 'localhost', port = 8082, options = {}) {
         this.client = new UnityClient_1.UnityClient(host, port);
         this.options = {
             maxRetries: options.maxRetries ?? 3,

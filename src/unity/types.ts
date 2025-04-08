@@ -119,7 +119,7 @@ export interface ResilientUnityClientOptions {
 export interface UnityClientConfig {
   /** Unity host (default: localhost) */
   host?: string;
-  /** Unity port (default: 8081) */
+  /** Unity port (default: 8082) */
   port?: number;
   /** Whether to use resilient client with retries (default: true) */
   resilient?: boolean;

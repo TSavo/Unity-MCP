@@ -13,9 +13,9 @@ class UnityClient {
     /**
      * Create a new Unity client
      * @param host Unity host (default: localhost)
-     * @param port Unity port (default: 8081)
+     * @param port Unity port (default: 8082)
      */
-    constructor(host = 'localhost', port = 8081) {
+    constructor(host = 'localhost', port = 8082) {
         this.baseUrl = `http://${host}:${port}`;
         this.axios = axios_1.default.create({
             baseURL: this.baseUrl,

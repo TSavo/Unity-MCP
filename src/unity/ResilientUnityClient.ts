@@ -11,7 +11,7 @@ export class ResilientUnityClient implements IUnityClient {
 
   constructor(
     host: string = 'localhost',
-    port: number = 8081,
+    port: number = 8082,
     options: ResilientUnityClientOptions = {}
   ) {
     this.client = new UnityClient(host, port);
