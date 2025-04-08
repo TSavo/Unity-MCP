@@ -12,6 +12,18 @@ using Debug = UnityEngine.Debug;
 namespace UnityMCP.Client.Editor
 {
     /// <summary>
+    /// Data structure for log entries
+    /// </summary>
+    [System.Serializable]
+    public class LogEntryData
+    {
+        public string message;
+        public string data;
+        public string level;
+        public string timestamp;
+    }
+
+    /// <summary>
     /// Result of a code execution operation
     /// </summary>
     public class CodeExecutionResult
@@ -106,7 +118,7 @@ namespace UnityMCP.Client.Editor
         /// <param name="message">The message to log</param>
         /// <param name="data">Additional data (optional)</param>
         /// <returns>Task</returns>
-        public async Task Debug(string message, object data = null)
+        public async Task LogDebug(string message, object data = null)
         {
             UnityEngine.Debug.Log($"[{_logName}] DEBUG: {message}");
             await AppendToLog(message, data, "DEBUG");
@@ -160,11 +172,19 @@ namespace UnityMCP.Client.Editor
             try
             {
                 // Log to Unity console first (in case the HTTP request fails)
-                Debug.Log($"[{_logName}] {level}: {message}");
+                UnityEngine.Debug.Log($"[{_logName}] {level}: {message}");
 
-                // Create a simple JSON string manually
-                string dataJson = data != null ? (data is string ? $"\"{data}\"" : data.ToString()) : "null";
-                string json = $"{{\"message\":\"{message}\",\"data\":{dataJson},\"level\":\"{level}\",\"timestamp\":\"{DateTime.UtcNow.ToString("o")}\"}}";
+                // Create a log entry object
+                var logEntry = new LogEntryData
+                {
+                    message = message,
+                    data = data != null ? data.ToString() : null,
+                    level = level,
+                    timestamp = DateTime.UtcNow.ToString("o")
+                };
+
+                // Serialize to JSON using a simple approach
+                string json = $"{{\"message\":\"{message.Replace("\"", "\\\"")}\",\"level\":\"{level}\",\"timestamp\":\"{DateTime.UtcNow.ToString("o")}\"}}";
 
                 // Create the request
                 var request = WebRequest.Create($"{LogEndpoint}/{_logName}");
