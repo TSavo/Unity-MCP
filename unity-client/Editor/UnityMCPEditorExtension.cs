@@ -324,10 +324,13 @@ namespace UnityMCP.Client.Editor
                 string localhostPrefix = $"http://localhost:{serverPort}/";
                 string ipv4Prefix = $"http://127.0.0.1:{serverPort}/";
 
+                Debug.Log($"[Unity MCP] Adding HTTP listener prefixes: {localhostPrefix}, {ipv4Prefix}");
                 httpListener.Prefixes.Add(localhostPrefix);
                 httpListener.Prefixes.Add(ipv4Prefix);
 
+                Debug.Log($"[Unity MCP] Starting HTTP listener");
                 httpListener.Start();
+                Debug.Log($"[Unity MCP] HTTP listener started: {httpListener.IsListening}");
 
                 // Log the HTTP listener details
                 var setupLogger = new AILogger("unity-http-setup");
@@ -376,12 +379,22 @@ namespace UnityMCP.Client.Editor
                 try
                 {
 
+                    // Log that we're about to get a context
+                    Debug.Log($"[Unity MCP] About to get HTTP context, listener is listening: {httpListener.IsListening}");
+                    _ = debugLogger.Info($"About to get HTTP context", new { isListening = httpListener.IsListening });
+
                     // Create a task to get the context with a timeout
-                    var contextTask = Task.Run(() => httpListener.GetContext());
+                    var contextTask = Task.Run(() =>
+                    {
+                        Debug.Log($"[Unity MCP] Getting HTTP context on thread {Thread.CurrentThread.ManagedThreadId}");
+                        return httpListener.GetContext();
+                    });
 
                     // Wait for the task to complete or for cancellation
+                    Debug.Log($"[Unity MCP] Waiting for HTTP context task to complete");
                     if (Task.WaitAny(new[] { contextTask }, 1000, cancellationToken) == 0)
                     {
+                        Debug.Log($"[Unity MCP] HTTP context task completed");
                         // Task completed successfully
                         var context = contextTask.Result;
                         var request = context.Request;
