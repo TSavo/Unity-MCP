@@ -8,7 +8,9 @@ using System.Threading;
 using System.Text;
 using System.IO;
 using Newtonsoft.Json;
-using UnityMCP.Server.Logging;
+using UnityMCP.Server.Services;
+using UnityMCP.Server.Models;
+using UnityMCP.Client.Services;
 using Debug = UnityEngine.Debug;
 
 namespace UnityMCP.Client.Editor
