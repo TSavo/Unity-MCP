@@ -7,7 +7,7 @@ using System.Net;
 using System.Threading;
 using System.Text;
 using System.IO;
-using System.Text.Json;
+using Newtonsoft.Json;
 using AI.Logging;
 using Debug = UnityEngine.Debug;
 
