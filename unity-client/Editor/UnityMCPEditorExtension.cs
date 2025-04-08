@@ -201,6 +201,7 @@ namespace UnityMCP.Client.Editor
 
                         response.Close();
                     }
+                }
                 catch (OperationCanceledException)
                 {
                     // This is expected when cancellation is requested
