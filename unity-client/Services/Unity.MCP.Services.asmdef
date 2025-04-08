@@ -1,10 +1,8 @@
 {
-    "name": "Unity.MCP.Editor",
+    "name": "Unity.MCP.Services",
     "rootNamespace": "UnityMCP",
-    "references": ["Unity.MCP.Services", "Unity.MCP.Plugins"],
-    "includePlatforms": [
-        "Editor"
-    ],
+    "references": ["Unity.MCP.Plugins"],
+    "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

@@ -1,7 +1,7 @@
 {
     "name": "Unity.MCP.Runtime",
     "rootNamespace": "UnityMCP",
-    "references": ["Unity.MCP.Services"],
+    "references": ["Unity.MCP.Services", "Unity.MCP.Plugins"],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
