@@ -8,7 +8,7 @@ using System.Threading;
 using System.Text;
 using System.IO;
 using Newtonsoft.Json;
-using AI.Logging;
+using UnityMCP.Server.Logging;
 using Debug = UnityEngine.Debug;
 
 namespace UnityMCP.Client.Editor
@@ -136,9 +136,9 @@ namespace UnityMCP.Client.Editor
 
                         // Log that we're returning a default game state
                         Debug.Log("[Unity MCP] Returning default game state due to thread safety issues");
-                        // Log the game state using AILogger
-                        var stateLogger = new AILogger("unity-state");
-                        stateLogger.Info("Game state", gameState);
+                        // Log the game state using Debug.Log for now
+                        // We'll implement proper AILogger integration later
+                        Debug.Log($"[Unity MCP] Game state: IsPlaying={gameState.IsPlaying}, IsPaused={gameState.IsPaused}, IsCompiling={gameState.IsCompiling}, CurrentScene={gameState.CurrentScene}");
 
                         responseText = $"{{\"isPlaying\":{gameState.IsPlaying.ToString().ToLower()},\"isPaused\":{gameState.IsPaused.ToString().ToLower()},\"isCompiling\":{gameState.IsCompiling.ToString().ToLower()},\"currentScene\":\"{gameState.CurrentScene}\",\"timeScale\":{gameState.TimeScale},\"frameCount\":{gameState.FrameCount},\"realtimeSinceStartup\":{gameState.RealtimeSinceStartup}}}";
                         handled = true;
@@ -148,9 +148,9 @@ namespace UnityMCP.Client.Editor
                     {
                         // Log that we're simulating starting the game
                         Debug.Log("[Unity MCP] Simulating game start due to thread safety issues");
-                        // Log the game start using AILogger
-                        var startLogger = new AILogger("unity-start");
-                        startLogger.Info("Game start", new { success = true });
+                        // Log the game start using Debug.Log for now
+                        // We'll implement proper AILogger integration later
+                        Debug.Log("[Unity MCP] Game start: success=true");
 
                         // Return a success response
                         responseText = $"{{\"success\":true,\"result\":\"Game started successfully (simulated)\",\"logs\":[\"Game started successfully (simulated)\"],\"executionTime\":0}}";
@@ -161,9 +161,9 @@ namespace UnityMCP.Client.Editor
                     {
                         // Log that we're simulating stopping the game
                         Debug.Log("[Unity MCP] Simulating game stop due to thread safety issues");
-                        // Log the game stop using AILogger
-                        var stopLogger = new AILogger("unity-stop");
-                        stopLogger.Info("Game stop", new { success = true });
+                        // Log the game stop using Debug.Log for now
+                        // We'll implement proper AILogger integration later
+                        Debug.Log("[Unity MCP] Game stop: success=true");
 
                         // Return a success response
                         responseText = $"{{\"success\":true,\"result\":\"Game stopped successfully (simulated)\",\"logs\":[\"Game stopped successfully (simulated)\"],\"executionTime\":0}}";

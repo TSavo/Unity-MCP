@@ -151,7 +151,7 @@ namespace UnityMCP.Client.Services
         /// Get the current game state
         /// </summary>
         /// <returns>The current game state</returns>
-        public Task<Models.GameState> GetGameStateAsync()
+        public Task<UnityMCP.Client.Models.GameState> GetGameStateAsync()
         {
             _logService.Log("Getting game state", LogSeverity.Debug);
 
@@ -161,7 +161,7 @@ namespace UnityMCP.Client.Services
                 var editorGameState = UnityMCPEditorExtension.GetGameState();
 
                 // Convert to the model GameState
-                var gameState = new Models.GameState
+                var gameState = new UnityMCP.Client.Models.GameState
                 {
                     IsPlaying = editorGameState.IsPlaying,
                     IsPaused = editorGameState.IsPaused,
@@ -179,7 +179,7 @@ namespace UnityMCP.Client.Services
                 _logService.LogError($"Error getting game state: {ex.Message}", ex);
 
                 // Return a minimal game state
-                return Task.FromResult(new Models.GameState
+                return Task.FromResult(new UnityMCP.Client.Models.GameState
                 {
                     IsPlaying = false,
                     IsPaused = false,

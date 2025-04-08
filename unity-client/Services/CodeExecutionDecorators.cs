@@ -1,5 +1,6 @@
 using UnityMCP.Client.Models;
 using System;
+using Microsoft.Extensions.Logging;
 
 namespace UnityMCP.Client.Services
 {
