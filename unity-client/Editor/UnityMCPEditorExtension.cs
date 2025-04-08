@@ -226,7 +226,7 @@ namespace UnityMCP.Client.Editor
         private static bool serverStarted = false;
         private static HttpListener httpListener;
         private static Thread serverThread;
-        private static int serverPort = 8081;
+        private static int serverPort = 8082;
         private static CancellationTokenSource cancellationTokenSource;
 
         // Dictionary to store log entries
