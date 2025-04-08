@@ -6,7 +6,6 @@ using System.Threading.Tasks;
 using System.Net;
 using System.Threading;
 using System.Text;
-using System.Text.Json;
 using System.IO;
 using Debug = UnityEngine.Debug;
 
@@ -160,17 +159,9 @@ namespace UnityMCP.Client.Editor
         {
             try
             {
-                // Create the log data
-                var logData = new
-                {
-                    message,
-                    data,
-                    level,
-                    timestamp = DateTime.UtcNow
-                };
-
-                // Convert to JSON
-                string json = System.Text.Json.JsonSerializer.Serialize(logData);
+                // Create a simple JSON string manually
+                string dataJson = data != null ? (data is string ? $"\"{data}\"" : data.ToString()) : "null";
+                string json = $"{{\"message\":\"{message}\",\"data\":{dataJson},\"level\":\"{level}\",\"timestamp\":\"{DateTime.UtcNow.ToString("o")}\"}}";
 
                 // Create the request
                 var request = WebRequest.Create($"{LogEndpoint}/{_logName}");
